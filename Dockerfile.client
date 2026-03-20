@@ -39,13 +39,15 @@ FROM base AS build
 
 WORKDIR /app
 
+# Set API target for Vite (defaults to the Docker network name 'server')
 ARG VITE_API_TARGET=http://server:3001
 
 COPY packages/shared/ ./packages/shared/
 COPY client/          ./client/
 
-# Build the Vite SPA
-RUN npm run build --workspace=client
+# Build shared first as client depends on it
+RUN npm run build --workspace=@vcc/shared
+RUN npm run build --workspace=@vcc/client
 
 # ── Production: serve with nginx ─────────────────────────────────────────────
 FROM nginx:1.27-alpine AS prod

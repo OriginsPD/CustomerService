@@ -45,7 +45,9 @@ WORKDIR /app
 COPY packages/shared/ ./packages/shared/
 COPY server/          ./server/
 
-RUN npm run build --workspace=server
+# Build shared first as server depends on it
+RUN npm run build --workspace=@vcc/shared
+RUN npm run build --workspace=@vcc/server
 
 # ── Production target: lean runtime image ────────────────────────────────────
 FROM node:22-alpine AS prod
@@ -54,13 +56,18 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Only the root workspace manifest + server manifest needed at runtime
+# Only the root workspace manifest + server/shared manifests needed at runtime
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY server/package.json           ./server/
-COPY client/package.json           ./client/
 
+# Install only production dependencies
 RUN npm install --omit=dev --ignore-scripts
+
+# Point workspaces to their compiled output for the production runtime
+# (so Node doesn't try to run the original TypeScript source)
+RUN sed -i 's/"main": ".\/src\/index.ts"/"main": ".\/dist\/index.js"/' packages/shared/package.json && \
+    sed -i 's/"types": ".\/src\/index.ts"/"types": ".\/dist\/index.d.ts"/' packages/shared/package.json
 
 # Compiled output from build stage
 COPY --from=build /app/server/dist  ./server/dist
