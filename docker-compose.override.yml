@@ -1,0 +1,13 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Optional overrides — automatically merged when running `docker compose up`.
+#
+# Adds Drizzle Studio on port 4983 so you can inspect the Neon DB via GUI
+# while the dev stack is running.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  server:
+    # Expose Drizzle Studio port alongside the API
+    ports:
+      - "3001:3001"
+      - "4983:4983"     # drizzle-kit studio

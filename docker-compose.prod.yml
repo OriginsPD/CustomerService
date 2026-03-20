@@ -1,0 +1,59 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# VCC — Production Docker Compose
+#
+# Builds optimised images:
+#   • server  → compiled TypeScript, no devDeps, no source maps
+#   • client  → Vite-built static bundle served by nginx
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up --build -d
+#   docker compose -f docker-compose.prod.yml logs -f
+#   docker compose -f docker-compose.prod.yml down
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Production Server ─────────────────────────────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+      target: prod
+    container_name: vcc-server-prod
+    restart: always
+    env_file:
+      - .env
+    environment:
+      PORT: "3001"
+      NODE_ENV: production
+    expose:
+      - "3001"            # internal only — nginx proxies /api
+    networks:
+      - vcc-prod-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── Production Client (nginx) ─────────────────────────────────────────────
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+      target: prod
+    container_name: vcc-client-prod
+    restart: always
+    ports:
+      - "80:80"           # public-facing port
+    networks:
+      - vcc-prod-net
+    depends_on:
+      server:
+        condition: service_healthy
+
+networks:
+  vcc-prod-net:
+    driver: bridge

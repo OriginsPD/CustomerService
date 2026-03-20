@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# VCC Client — Vite / React 19
+# Targets:  dev   → Vite dev server with HMR (volume-mounted source)
+#           build → production static bundle
+#           prod  → nginx serving the static bundle
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Base: install workspace deps ─────────────────────────────────────────────
+FROM node:22-alpine AS base
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY server/package.json           ./server/
+COPY client/package.json           ./client/
+
+# npm ci is strict — it fails when the lockfile's workspace declarations
+# don't exactly match package.json (e.g. after a version bump).
+# npm install re-resolves only what changed and stays reproducible.
+RUN npm install --ignore-scripts
+
+# ── Development target (used by docker-compose.yml) ──────────────────────────
+FROM base AS dev
+
+WORKDIR /app
+
+# Source arrives via bind-mount volumes.
+# --host exposes Vite's dev server to the Docker network (required).
+# VITE_API_TARGET is set by docker-compose to route /api → server container.
+
+EXPOSE 5173
+
+# Use -w flag BEFORE "run" so npm consumes it, not the vite process
+CMD ["npm", "-w", "@vcc/client", "run", "dev"]
+
+# ── Build: produce static assets ─────────────────────────────────────────────
+FROM base AS build
+
+WORKDIR /app
+
+ARG VITE_API_TARGET=http://server:3001
+
+COPY packages/shared/ ./packages/shared/
+COPY client/          ./client/
+
+# Build the Vite SPA
+RUN npm run build --workspace=client
+
+# ── Production: serve with nginx ─────────────────────────────────────────────
+FROM nginx:1.27-alpine AS prod
+
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Add VCC nginx config
+COPY docker/nginx.conf /etc/nginx/conf.d/vcc.conf
+
+# Copy static assets from build stage
+COPY --from=build /app/client/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

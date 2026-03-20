@@ -1,0 +1,96 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# VCC — Development Docker Compose
+#
+# Features:
+#   • Bind-mounts src/ directories so code changes reload instantly
+#   • node_modules live inside the container (anonymous volumes) so the
+#     host folder never shadows the container's installed packages
+#   • Shared package (packages/shared) is mounted into both services
+#
+# Usage:
+#   docker compose up --build          # first run
+#   docker compose up                  # subsequent runs
+#   docker compose down -v             # stop + remove volumes
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Hono API Server ──────────────────────────────────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+      target: dev                         # uses tsx watch HMR
+    container_name: vcc-server
+    restart: unless-stopped
+    env_file:
+      - .env                              # DATABASE_URL, OPENCODE_API_KEY, PORT
+    environment:
+      PORT: "3001"
+      CLIENT_URL: "http://localhost:5173"
+      NODE_ENV: development
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "3001:3001"                       # expose for direct API testing
+    volumes:
+      # ── Source bind-mounts (changes reflect immediately) ──
+      - ./server/src:/app/server/src
+      - ./packages/shared/src:/app/packages/shared/src
+      # ── Keep node_modules inside the container ──
+      - server_nm:/app/node_modules
+      - server_dist:/app/server/dist
+    networks:
+      - vcc-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Vite Client ───────────────────────────────────────────────────────────────
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+      target: dev                         # uses Vite HMR dev server
+    container_name: vcc-client
+    restart: unless-stopped
+    environment:
+      VITE_API_TARGET: "http://server:3001"   # proxy → server container
+      NODE_ENV: development
+    ports:
+      - "5173:5173"                       # browser connects here
+    volumes:
+      # ── Source bind-mounts ──
+      - ./client/src:/app/client/src
+      - ./client/public:/app/client/public
+      - ./client/index.html:/app/client/index.html
+      - ./client/tailwind.config.js:/app/client/tailwind.config.js
+      - ./client/postcss.config.js:/app/client/postcss.config.js
+      - ./client/vite.config.ts:/app/client/vite.config.ts
+      # tsconfig files needed by the TanStack Router plugin for path-alias resolution
+      - ./client/tsconfig.json:/app/client/tsconfig.json
+      - ./client/tsconfig.node.json:/app/client/tsconfig.node.json
+      - ./packages/shared/src:/app/packages/shared/src
+      # ── Keep node_modules inside the container ──
+      - client_nm:/app/node_modules
+      - client_src_nm:/app/client/node_modules
+    networks:
+      - vcc-net
+    depends_on:
+      server:
+        condition: service_healthy
+
+# ── Named volumes ─────────────────────────────────────────────────────────────
+volumes:
+  server_nm:       # server node_modules (never overwritten by host)
+  server_dist:     # compiled server output
+  client_nm:       # root node_modules
+  client_src_nm:   # client-level node_modules
+
+# ── Network ───────────────────────────────────────────────────────────────────
+networks:
+  vcc-net:
+    driver: bridge

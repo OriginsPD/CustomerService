@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── ShadCN CSS Variables (adapted for VCC dark theme) ─────────────────────── */
+@layer base {
+  :root {
+    --background: 220 20% 4%;
+    --foreground: 210 40% 95%;
+    --card: 220 25% 8%;
+    --card-foreground: 210 40% 95%;
+    --popover: 220 25% 8%;
+    --popover-foreground: 210 40% 95%;
+    --primary: 213 94% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 14%;
+    --secondary-foreground: 210 40% 85%;
+    --muted: 220 20% 14%;
+    --muted-foreground: 210 20% 55%;
+    --accent: 190 94% 44%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 16%;
+    --input: 220 20% 14%;
+    --ring: 213 94% 60%;
+    --radius: 0.75rem;
+  }
+}
+
+/* ── Global base styles ──────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    background: linear-gradient(135deg, #0a0a0a 0%, #0d1b2a 100%);
+    min-height: 100vh;
+    @apply text-foreground font-sans antialiased;
+  }
+
+  /* Thin custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #3b82f6, #06b6d4);
+    border-radius: 3px;
+  }
+}
+
+/* ── VCC Utility Classes ─────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Glass card effect — the core VCC surface style */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+  }
+
+  /* Gloss overlay — top-edge highlight mimicking a glossy surface */
+  .gloss-overlay {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gloss-overlay::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, transparent 100%);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Blue → Cyan gradient text */
+  .gradient-text {
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Blue → Cyan gradient button */
+  .btn-gradient {
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    color: white;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+  }
+
+  .btn-gradient:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-gradient:active {
+    transform: translateY(0);
+  }
+
+  /* Gradient border via box-shadow */
+  .gradient-border {
+    border: 1px solid transparent;
+    box-shadow: 0 0 0 1px #3b82f6, 0 0 16px rgba(59, 130, 246, 0.25);
+  }
+
+  /* Glow effect for interactive elements */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.1);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.3), 0 0 40px rgba(6, 182, 212, 0.1);
+  }
+
+  /* Sentiment color utilities */
+  .sentiment-positive {
+    color: #06b6d4;
+  }
+
+  .sentiment-neutral {
+    color: #3b82f6;
+  }
+
+  .sentiment-negative {
+    color: #f43f5e;
+  }
+
+  /* Shimmer loading skeleton */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 25%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}

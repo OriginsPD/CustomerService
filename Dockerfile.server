@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# VCC Server — Hono / Node.js
+# Targets:  dev   → hot-reload via tsx watch (volume-mounted source)
+#           build → TypeScript compile
+#           prod  → minimal runtime image
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Base: install workspace deps only (for layer caching) ────────────────────
+FROM node:22-alpine AS base
+
+WORKDIR /app
+
+# Copy only manifests first so dependency install is cached separately
+# from source code changes
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY server/package.json           ./server/
+COPY client/package.json           ./client/
+
+# Install ALL workspace deps (shared, server, client) in one go so that
+# npm workspace symlinks are resolved correctly.
+# npm install (not ci) so workspace declaration updates don't break the build.
+RUN npm install --ignore-scripts
+
+# ── Development target (used by docker-compose.yml) ──────────────────────────
+FROM base AS dev
+
+WORKDIR /app
+
+# Source is NOT copied here — it arrives via bind-mount volumes at runtime.
+# node_modules live inside the container; an anonymous volume in compose
+# prevents the host's node_modules directory from shadowing them.
+
+EXPOSE 3001
+
+# tsx watch provides HMR for the TypeScript server
+CMD ["npm", "-w", "@vcc/server", "run", "dev"]
+
+# ── Build target: compile TypeScript ─────────────────────────────────────────
+FROM base AS build
+
+WORKDIR /app
+
+# Copy all source (shared first, server second)
+COPY packages/shared/ ./packages/shared/
+COPY server/          ./server/
+
+RUN npm run build --workspace=server
+
+# ── Production target: lean runtime image ────────────────────────────────────
+FROM node:22-alpine AS prod
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Only the root workspace manifest + server manifest needed at runtime
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY server/package.json           ./server/
+COPY client/package.json           ./client/
+
+RUN npm install --omit=dev --ignore-scripts
+
+# Compiled output from build stage
+COPY --from=build /app/server/dist  ./server/dist
+COPY --from=build /app/packages/shared/dist ./packages/shared/dist
+
+EXPOSE 3001
+
+CMD ["node", "server/dist/index.js"]
