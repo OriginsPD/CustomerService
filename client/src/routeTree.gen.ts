@@ -17,8 +17,12 @@ import { Route as EvaluationIndexRouteImport } from './routes/evaluation/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as CheckInIndexRouteImport } from './routes/check-in/index'
 import { Route as StaffLoginRouteImport } from './routes/staff/login'
+import { Route as StaffDashboardRouteImport } from './routes/staff/dashboard'
 import { Route as CheckOutSessionIdRouteImport } from './routes/check-out/$sessionId'
 import { Route as StaffDashboardIndexRouteImport } from './routes/staff/dashboard/index'
+import { Route as StaffDashboardQueueRouteImport } from './routes/staff/dashboard/queue'
+import { Route as StaffDashboardQuestionsRouteImport } from './routes/staff/dashboard/questions'
+import { Route as StaffDashboardAnalyticsRouteImport } from './routes/staff/dashboard/analytics'
 
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
@@ -60,27 +64,51 @@ const StaffLoginRoute = StaffLoginRouteImport.update({
   path: '/staff/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffDashboardRoute = StaffDashboardRouteImport.update({
+  id: '/staff/dashboard',
+  path: '/staff/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckOutSessionIdRoute = CheckOutSessionIdRouteImport.update({
   id: '/check-out/$sessionId',
   path: '/check-out/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffDashboardIndexRoute = StaffDashboardIndexRouteImport.update({
-  id: '/staff/dashboard/',
-  path: '/staff/dashboard/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffDashboardRoute,
+} as any)
+const StaffDashboardQueueRoute = StaffDashboardQueueRouteImport.update({
+  id: '/queue',
+  path: '/queue',
+  getParentRoute: () => StaffDashboardRoute,
+} as any)
+const StaffDashboardQuestionsRoute = StaffDashboardQuestionsRouteImport.update({
+  id: '/questions',
+  path: '/questions',
+  getParentRoute: () => StaffDashboardRoute,
+} as any)
+const StaffDashboardAnalyticsRoute = StaffDashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => StaffDashboardRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/check-out/$sessionId': typeof CheckOutSessionIdRoute
+  '/staff/dashboard': typeof StaffDashboardRouteWithChildren
   '/staff/login': typeof StaffLoginRoute
   '/check-in/': typeof CheckInIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/evaluation/': typeof EvaluationIndexRoute
   '/kiosk/': typeof KioskIndexRoute
   '/queue/': typeof QueueIndexRoute
+  '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
+  '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
+  '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
   '/staff/dashboard/': typeof StaffDashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +121,9 @@ export interface FileRoutesByTo {
   '/evaluation': typeof EvaluationIndexRoute
   '/kiosk': typeof KioskIndexRoute
   '/queue': typeof QueueIndexRoute
+  '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
+  '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
+  '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
   '/staff/dashboard': typeof StaffDashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -100,12 +131,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/check-out/$sessionId': typeof CheckOutSessionIdRoute
+  '/staff/dashboard': typeof StaffDashboardRouteWithChildren
   '/staff/login': typeof StaffLoginRoute
   '/check-in/': typeof CheckInIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/evaluation/': typeof EvaluationIndexRoute
   '/kiosk/': typeof KioskIndexRoute
   '/queue/': typeof QueueIndexRoute
+  '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
+  '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
+  '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
   '/staff/dashboard/': typeof StaffDashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -114,12 +149,16 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/check-out/$sessionId'
+    | '/staff/dashboard'
     | '/staff/login'
     | '/check-in/'
     | '/dashboard/'
     | '/evaluation/'
     | '/kiosk/'
     | '/queue/'
+    | '/staff/dashboard/analytics'
+    | '/staff/dashboard/questions'
+    | '/staff/dashboard/queue'
     | '/staff/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,18 +171,25 @@ export interface FileRouteTypes {
     | '/evaluation'
     | '/kiosk'
     | '/queue'
+    | '/staff/dashboard/analytics'
+    | '/staff/dashboard/questions'
+    | '/staff/dashboard/queue'
     | '/staff/dashboard'
   id:
     | '__root__'
     | '/'
     | '/$'
     | '/check-out/$sessionId'
+    | '/staff/dashboard'
     | '/staff/login'
     | '/check-in/'
     | '/dashboard/'
     | '/evaluation/'
     | '/kiosk/'
     | '/queue/'
+    | '/staff/dashboard/analytics'
+    | '/staff/dashboard/questions'
+    | '/staff/dashboard/queue'
     | '/staff/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -151,13 +197,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   CheckOutSessionIdRoute: typeof CheckOutSessionIdRoute
+  StaffDashboardRoute: typeof StaffDashboardRouteWithChildren
   StaffLoginRoute: typeof StaffLoginRoute
   CheckInIndexRoute: typeof CheckInIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   EvaluationIndexRoute: typeof EvaluationIndexRoute
   KioskIndexRoute: typeof KioskIndexRoute
   QueueIndexRoute: typeof QueueIndexRoute
-  StaffDashboardIndexRoute: typeof StaffDashboardIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -218,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/dashboard': {
+      id: '/staff/dashboard'
+      path: '/staff/dashboard'
+      fullPath: '/staff/dashboard'
+      preLoaderRoute: typeof StaffDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/check-out/$sessionId': {
       id: '/check-out/$sessionId'
       path: '/check-out/$sessionId'
@@ -227,25 +280,64 @@ declare module '@tanstack/react-router' {
     }
     '/staff/dashboard/': {
       id: '/staff/dashboard/'
-      path: '/staff/dashboard'
+      path: '/'
       fullPath: '/staff/dashboard/'
       preLoaderRoute: typeof StaffDashboardIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof StaffDashboardRoute
+    }
+    '/staff/dashboard/queue': {
+      id: '/staff/dashboard/queue'
+      path: '/queue'
+      fullPath: '/staff/dashboard/queue'
+      preLoaderRoute: typeof StaffDashboardQueueRouteImport
+      parentRoute: typeof StaffDashboardRoute
+    }
+    '/staff/dashboard/questions': {
+      id: '/staff/dashboard/questions'
+      path: '/questions'
+      fullPath: '/staff/dashboard/questions'
+      preLoaderRoute: typeof StaffDashboardQuestionsRouteImport
+      parentRoute: typeof StaffDashboardRoute
+    }
+    '/staff/dashboard/analytics': {
+      id: '/staff/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/staff/dashboard/analytics'
+      preLoaderRoute: typeof StaffDashboardAnalyticsRouteImport
+      parentRoute: typeof StaffDashboardRoute
     }
   }
 }
+
+interface StaffDashboardRouteChildren {
+  StaffDashboardAnalyticsRoute: typeof StaffDashboardAnalyticsRoute
+  StaffDashboardQuestionsRoute: typeof StaffDashboardQuestionsRoute
+  StaffDashboardQueueRoute: typeof StaffDashboardQueueRoute
+  StaffDashboardIndexRoute: typeof StaffDashboardIndexRoute
+}
+
+const StaffDashboardRouteChildren: StaffDashboardRouteChildren = {
+  StaffDashboardAnalyticsRoute: StaffDashboardAnalyticsRoute,
+  StaffDashboardQuestionsRoute: StaffDashboardQuestionsRoute,
+  StaffDashboardQueueRoute: StaffDashboardQueueRoute,
+  StaffDashboardIndexRoute: StaffDashboardIndexRoute,
+}
+
+const StaffDashboardRouteWithChildren = StaffDashboardRoute._addFileChildren(
+  StaffDashboardRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   CheckOutSessionIdRoute: CheckOutSessionIdRoute,
+  StaffDashboardRoute: StaffDashboardRouteWithChildren,
   StaffLoginRoute: StaffLoginRoute,
   CheckInIndexRoute: CheckInIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   EvaluationIndexRoute: EvaluationIndexRoute,
   KioskIndexRoute: KioskIndexRoute,
   QueueIndexRoute: QueueIndexRoute,
-  StaffDashboardIndexRoute: StaffDashboardIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

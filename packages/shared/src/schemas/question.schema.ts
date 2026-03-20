@@ -20,7 +20,7 @@ export type DynamicQuestion = z.infer<typeof DynamicQuestionSchema>;
 export const QuestionListSchema = z.array(DynamicQuestionSchema);
 export type QuestionList = z.infer<typeof QuestionListSchema>;
 
-export const AIActionEnum = z.enum(["add_question", "remove_question", "retain"]);
+export const AIActionEnum = z.enum(["add_question", "remove_question", "retain", "no_change"]);
 export type AIAction = z.infer<typeof AIActionEnum>;
 
 export const AIDecisionSchema = z.object({

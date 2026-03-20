@@ -55,7 +55,17 @@ export async function runAnalysis(): Promise<{
     const decisions = await generateAdaptiveQuestions(feedbackBatch, activeQuestions);
 
     if (decisions.length === 0) {
-      console.log("[Scheduler] No AI decisions returned.");
+      console.log("[Scheduler] No AI decisions returned — logging as no_change.");
+      
+      await db.insert(aiDecisionLog).values({
+        id: nanoid(),
+        action: "no_change",
+        reasoning: recentFeedback.length > 0 
+          ? `Analyzed ${recentFeedback.length} feedback responses. Current questions remain optimal.`
+          : "Insufficient new feedback for analysis. Maintaining current state.",
+        feedbackSampleSize: recentFeedback.length,
+      });
+
       isRunning = false;
       return {
         status: "ok",

@@ -21,12 +21,14 @@ const actionLabels: Record<string, string> = {
   add_question: "Added",
   remove_question: "Removed",
   retain: "Retained",
+  no_change: "Audit",
 };
 
-const actionVariants: Record<string, "add" | "remove" | "retain"> = {
+const actionVariants: Record<string, "add" | "remove" | "retain" | "outline"> = {
   add_question: "add",
   remove_question: "remove",
   retain: "retain",
+  no_change: "outline",
 };
 
 export function AILogPanel({ open, onClose }: AILogPanelProps) {
