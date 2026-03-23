@@ -42,6 +42,7 @@ export const aiActionEnum = pgEnum("ai_action", [
   "add_question",
   "remove_question",
   "retain",
+  "no_change",
 ]);
 
 // ── Sessions (Check-In records) ──────────────────────────────────────────────
