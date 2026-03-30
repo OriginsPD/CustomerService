@@ -40,7 +40,7 @@ export function FeedbackSuccessDrawer({
 
   const handleNewCheckin = () => {
     onClose();
-    navigate({ to: "/check-in" });
+    navigate({ to: "/home" });
   };
 
   return (
@@ -95,7 +95,7 @@ export function FeedbackSuccessDrawer({
           </p>
 
           <Button onClick={handleNewCheckin} className="w-full mt-2">
-            New Check-In
+            Return Home
           </Button>
         </div>
       </SheetContent>

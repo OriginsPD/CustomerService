@@ -1,9 +1,12 @@
-import { useDashboardSummary, useTrends, useKeywords } from "@/hooks/useDashboard";
-import { OperationalMetrics } from "../OperationalMetrics";
+import { useDashboardSummary, useTrends, useKeywords, useHourlyHeatmap, useSentimentByPurpose } from "@/hooks/useDashboard";
+
 import { SentimentChart } from "../SentimentChart";
 import { TrendLineChart } from "../TrendLineChart";
 import { KeywordCloud } from "../KeywordCloud";
+import { HourlyHeatmapChart } from "../HourlyHeatmapChart";
+import { PurposeSentimentChart } from "../PurposeSentimentChart";
 import { InsightsPanel } from "../InsightsPanel";
+import { GlossCard } from "@/components/shared/GlossCard";
 import { Brain } from "lucide-react";
 
 export function AnalyticsSection() {
@@ -13,6 +16,8 @@ export function AnalyticsSection() {
   } = useDashboardSummary();
   const { data: trends = [], isLoading: trendsLoading } = useTrends(30);
   const { data: keywords = [], isLoading: keywordsLoading } = useKeywords();
+  const { data: heatmap = [], isLoading: heatmapLoading } = useHourlyHeatmap();
+  const { data: sentimentPurpose = [], isLoading: spLoading } = useSentimentByPurpose();
 
   return (
     <section>
@@ -28,10 +33,6 @@ export function AnalyticsSection() {
         </div>
       ) : summary ? (
         <>
-          <div className="mb-6">
-            <OperationalMetrics data={summary} />
-          </div>
-
           {summary.lastAiRunAt && (
             <div className="flex items-center gap-2 mb-6 text-xs text-muted-foreground">
               <Brain className="h-3 w-3 text-cyan-400" />
@@ -41,6 +42,27 @@ export function AnalyticsSection() {
               {summary.activeQuestionsCount} active questions
             </div>
           )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <GlossCard className="flex flex-col gap-1 p-5 border-blue-500/20 shadow-blue-500/5 shadow-lg">
+              <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Avg Wait Time</span>
+              <span className="text-2xl font-black gradient-text">
+                {summary.avgWaitTimeMinutes}m
+              </span>
+            </GlossCard>
+            <GlossCard className="flex flex-col gap-1 p-5 border-emerald-500/20 shadow-emerald-500/5 shadow-lg">
+              <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Avg Handle Time</span>
+              <span className="text-2xl font-black text-emerald-400">
+                {summary.avgHandleTimeMinutes}m
+              </span>
+            </GlossCard>
+            <GlossCard className="flex flex-col gap-1 p-5 border-rose-500/20 shadow-rose-500/5 shadow-lg">
+              <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Abandonment Rate</span>
+              <span className="text-2xl font-black text-rose-400">
+                {summary.abandonmentRatePct}%
+              </span>
+            </GlossCard>
+          </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 mb-4">
             <SentimentChart data={summary.sentimentDistribution} />
@@ -58,6 +80,36 @@ export function AnalyticsSection() {
           ) : (
             <KeywordCloud data={keywords} />
           )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4">
+            {heatmapLoading ? (
+               <GlossCard className="flex flex-col h-64 border-white/5">
+                 <div className="h-4 w-32 shimmer rounded mb-6" />
+                 <div className="flex-1 flex items-end gap-2">
+                   {[...Array(12)].map((_, i) => (
+                     <div key={i} className="flex-1 bg-white/5 rounded-t shimmer" style={{ height: `${Math.max(20, Math.random() * 100)}%` }} />
+                   ))}
+                 </div>
+               </GlossCard>
+            ) : (
+               <HourlyHeatmapChart data={heatmap} />
+            )}
+            {spLoading ? (
+               <GlossCard className="flex flex-col h-64 border-white/5">
+                 <div className="h-4 w-40 shimmer rounded mb-6" />
+                 <div className="flex-1 flex flex-col justify-between py-2">
+                   {[...Array(4)].map((_, i) => (
+                     <div key={i} className="flex items-center gap-3">
+                       <div className="w-16 h-3 shimmer rounded" />
+                       <div className="flex-1 h-6 bg-white/5 rounded shimmer" style={{ width: `${Math.max(40, Math.random() * 100)}%` }} />
+                     </div>
+                   ))}
+                 </div>
+               </GlossCard>
+            ) : (
+               <PurposeSentimentChart data={sentimentPurpose} />
+            )}
+          </div>
 
           <div className="mt-4">
             <InsightsPanel />

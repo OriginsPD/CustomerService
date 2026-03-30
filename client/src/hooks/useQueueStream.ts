@@ -7,7 +7,7 @@
  * the previous 15-second polling interval.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryClient";
 
@@ -15,6 +15,7 @@ export function useQueueStream() {
   const queryClient = useQueryClient();
   const retryDelay = useRef(1_000);
   const esRef = useRef<EventSource | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     let destroyed = false;
@@ -26,11 +27,17 @@ export function useQueueStream() {
       esRef.current = es;
 
       es.addEventListener("queue-update", () => {
+        setIsOffline(false);
         retryDelay.current = 1_000; // reset backoff on successful message
         queryClient.invalidateQueries({ queryKey: queryKeys.queue() });
       });
 
+      es.addEventListener("ping", () => {
+        setIsOffline(false);
+      });
+
       es.addEventListener("error", () => {
+        setIsOffline(true);
         es.close();
         if (!destroyed) {
           const delay = Math.min(retryDelay.current, 30_000);
@@ -47,4 +54,6 @@ export function useQueueStream() {
       esRef.current?.close();
     };
   }, [queryClient]);
+
+  return { isOffline };
 }

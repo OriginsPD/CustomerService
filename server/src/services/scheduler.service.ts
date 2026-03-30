@@ -1,8 +1,9 @@
 import { db } from "../db/connection.js";
-import { feedback, feedbackAnswers, dynamicQuestions, aiDecisionLog } from "../db/schema.js";
-import { and, gte, eq } from "drizzle-orm";
+import { feedback, feedbackAnswers, dynamicQuestions, aiDecisionLog, sessions, cancellationFeedback } from "../db/schema.js";
+import { and, gte, eq, lte, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { generateAdaptiveQuestions } from "./ai.service.js";
+import { deregisterSession } from "./queue.service.js";
 
 const INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_CONSECUTIVE_FAILURES = 3; // pause scheduler after this many in a row
@@ -30,10 +31,36 @@ export async function runAnalysis(): Promise<{
   try {
     const since = new Date(Date.now() - INTERVAL_MS);
 
+    // 0. Clean up sessions older than 24 hours that are still active
+    const expiredSessions = await db
+      .update(sessions)
+      .set({ status: "cancelled" })
+      .where(
+        and(
+          lte(sessions.checkedInAt, since),
+          inArray(sessions.status, ["waiting", "in_progress"])
+        )
+      )
+      .returning({ id: sessions.id });
+
+    for (const session of expiredSessions) {
+      await db.insert(cancellationFeedback).values({
+        id: nanoid(),
+        sessionId: session.id,
+        reason: "System timeout (exceeded 24 hours)",
+        wouldReschedule: false,
+      });
+      deregisterSession(session.id);
+    }
+    
+    if (expiredSessions.length > 0) {
+      console.log(`[Scheduler] Cleaned up ${expiredSessions.length} expired sessions.`);
+    }
+
     // 1. Fetch recent feedback (indexed query by submittedAt)
     const recentFeedback = await db.query.feedback.findMany({
       where: gte(feedback.submittedAt, since),
-      with: { answers: { with: { question: true } } },
+      with: { answers: { with: { question: true } }, session: true },
     });
 
     // 2. Fetch current active questions
@@ -43,13 +70,20 @@ export async function runAnalysis(): Promise<{
       .where(eq(dynamicQuestions.isActive, true));
 
     // 3. Build batch for AI
-    const feedbackBatch = recentFeedback.map((f) => ({
-      comment: f.comment,
-      rating: f.rating,
-      answers: Object.fromEntries(
-        f.answers.map((a) => [a.question.text, a.answer])
-      ),
-    }));
+    const feedbackBatch = recentFeedback.map((f) => {
+      const ms = f.session?.checkedOutAt && f.session?.checkedInAt 
+        ? f.session.checkedOutAt.getTime() - f.session.checkedInAt.getTime() 
+        : 0;
+      
+      return {
+        comment: f.comment,
+        rating: f.rating,
+        totalDurationMinutes: Math.round(ms / 60000),
+        answers: Object.fromEntries(
+          f.answers.map((a) => [a.question.text, a.answer])
+        ),
+      };
+    });
 
     // 4. Call AI service
     const decisions = await generateAdaptiveQuestions(feedbackBatch, activeQuestions);
@@ -91,7 +125,7 @@ export async function runAnalysis(): Promise<{
           displayOrder: nextOrder++,
         });
 
-        const rawResponse = decision.confidenceLevel != null ? { confidenceLevel: decision.confidenceLevel } : null;
+        const rawResponse = (decision as any).confidenceLevel != null ? { confidenceLevel: (decision as any).confidenceLevel } : null;
         await db.insert(aiDecisionLog).values({
           id: logId,
           action: "add_question",
@@ -107,7 +141,7 @@ export async function runAnalysis(): Promise<{
           .set({ isActive: false, removedAt: new Date() })
           .where(eq(dynamicQuestions.id, decision.questionId));
 
-        const rawResponse = decision.confidenceLevel != null ? { confidenceLevel: decision.confidenceLevel } : null;
+        const rawResponse = (decision as any).confidenceLevel != null ? { confidenceLevel: (decision as any).confidenceLevel } : null;
         await db.insert(aiDecisionLog).values({
           id: logId,
           action: "remove_question",
@@ -118,7 +152,7 @@ export async function runAnalysis(): Promise<{
           rawAiResponse: rawResponse,
         });
       } else if (decision.action === "retain" && decision.questionId) {
-        const rawResponse = decision.confidenceLevel != null ? { confidenceLevel: decision.confidenceLevel } : null;
+        const rawResponse = (decision as any).confidenceLevel != null ? { confidenceLevel: (decision as any).confidenceLevel } : null;
         await db.insert(aiDecisionLog).values({
           id: logId,
           action: "retain",

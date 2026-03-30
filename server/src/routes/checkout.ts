@@ -7,12 +7,13 @@ import { eq } from "drizzle-orm";
 import { CheckOutFormSchema } from "@vcc/shared";
 import { analyzeSentiment } from "../services/ai.service.js";
 import { deregisterSession } from "../services/queue.service.js";
+import { rateLimiter } from "../middleware/rateLimiter.js";
 import { logger } from "../lib/logger.js";
 
 export const checkoutRoutes = new Hono()
 
-  // POST /api/checkout — Submit feedback
-  .post("/", zValidator("json", CheckOutFormSchema, (result, c) => {
+  // POST /api/checkout — Submit feedback (Limit 3 per 10 min)
+  .post("/", rateLimiter(3, 10 * 60 * 1000), zValidator("json", CheckOutFormSchema, (result, c) => {
     if (!result.success) {
       const message = result.error.issues.map((i) => i.message).join("; ");
       logger.warn("[Checkout] Validation failed", { issues: result.error.issues });
@@ -49,7 +50,10 @@ export const checkoutRoutes = new Hono()
         if (session.status === "cancelled") {
           throw Object.assign(new Error("This session was cancelled"), { statusCode: 410 });
         }
-        if (session.status === "completed") {
+        const existingFeedback = await tx.query.feedback.findFirst({
+          where: eq(feedback.sessionId, body.sessionId),
+        });
+        if (existingFeedback) {
           throw Object.assign(new Error("Feedback already submitted for this session"), { statusCode: 409 });
         }
 

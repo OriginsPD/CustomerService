@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, UserPlus } from "lucide-react";
 import { CheckInFormSchema, purposeOptions, type CheckInForm, type CheckInResponse } from "@vcc/shared";
 import { useCheckIn } from "@/hooks/useCheckIn";
@@ -56,9 +56,27 @@ export function CheckInForm() {
     defaultValues: { phone: "", company: "" },
   });
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("vcc_user_details");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.name) setValue("name", parsed.name);
+        if (parsed.company) setValue("company", parsed.company);
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
+  }, [setValue]);
+
   const purposeValue = watch("purpose");
 
   const onSubmit = async (data: CheckInForm) => {
+    try {
+      localStorage.setItem("vcc_user_details", JSON.stringify({ name: data.name, company: data.company }));
+    } catch (e) {
+      // Ignore storage errors
+    }
     const result = await checkIn.mutateAsync(data);
     setConfirmData(result);
   };

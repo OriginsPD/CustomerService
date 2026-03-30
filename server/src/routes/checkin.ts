@@ -12,11 +12,12 @@ import {
   getQueuePosition,
   getEstimatedWaitMinutes,
 } from "../services/queue.service.js";
+import { rateLimiter } from "../middleware/rateLimiter.js";
 
 export const checkinRoutes = new Hono()
 
-  // POST /api/checkin — Register a new client
-  .post("/", zValidator("json", CheckInFormSchema, (result, c) => {
+  // POST /api/checkin — Register a new client (Limit 5 requests per 10 minutes)
+  .post("/", rateLimiter(5, 10 * 60 * 1000), zValidator("json", CheckInFormSchema, (result, c) => {
     if (!result.success) {
       const message = result.error.issues.map((i) => i.message).join("; ");
       return c.json({ error: `Validation failed: ${message}` }, 400);

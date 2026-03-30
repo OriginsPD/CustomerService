@@ -4,7 +4,16 @@ import { GlossCard } from "@/components/shared/GlossCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProcessClientModal } from "./ProcessClientModal";
-import { useQueue } from "@/hooks/useQueue";
+import { QRCodePanel } from "@/components/shared/QRCodePanel";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { QrCode, PlusCircle, Search } from "lucide-react";
+import { useQueue, useCompleteClient } from "@/hooks/useQueue";
 import { useQueueStream } from "@/hooks/useQueueStream";
 import { formatRelativeTime } from "@/lib/utils";
 import type { QueueItem } from "@vcc/shared";
@@ -24,13 +33,13 @@ type UrgencyLevel = "normal" | "warning" | "critical";
 
 function getUrgency(checkedInAt: string): UrgencyLevel {
   const m = getElapsedMinutes(checkedInAt);
-  if (m >= 20) return "critical";
-  if (m >= 10) return "warning";
+  if (m >= 15) return "critical";
+  if (m >= 5) return "warning";
   return "normal";
 }
 
 const URGENCY_STYLE: Record<UrgencyLevel, { row: string; time: string }> = {
-  normal:   { row: "",                                                        time: "text-muted-foreground" },
+  normal:   { row: "bg-emerald-500/[0.04] border-l-2 border-l-emerald-500/40", time: "text-emerald-400" },
   warning:  { row: "bg-amber-500/[0.04] border-l-2 border-l-amber-500/60",  time: "text-amber-400" },
   critical: { row: "bg-rose-500/[0.06] border-l-2 border-l-rose-500/70",    time: "text-rose-400 font-semibold" },
 };
@@ -41,7 +50,9 @@ export function QueueManagementPanel() {
   const { data: queue = [], isLoading, dataUpdatedAt } = useQueue();
   const [selectedClient, setSelectedClient] = useState<QueueItem | null>(null);
   const [search, setSearch] = useState("");
-  useQueueStream();
+  const completeMutation = useCompleteClient();
+  const { isOffline } = useQueueStream();
+  const [qrOpen, setQrOpen] = useState(false);
 
   // Clear search when queue size changes (processed client might no longer exist)
   useEffect(() => {
@@ -82,6 +93,15 @@ export function QueueManagementPanel() {
                 {queue.length} waiting
               </span>
             )}
+            {!isLoading && queue.filter(q => q.queuePosition > 0).length > 0 && (
+              <Button
+                size="sm"
+                className="ml-4 h-7 text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-bold"
+                onClick={() => setSelectedClient(queue.find(q => q.queuePosition > 0) || null)}
+              >
+                Call Next Client
+              </Button>
+            )}
           </div>
 
           {/* Right: stats + live indicator */}
@@ -119,10 +139,19 @@ export function QueueManagementPanel() {
               />
             )}
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Wifi className="h-3 w-3 text-emerald-400 animate-pulse" />
-              {dataUpdatedAt > 0
-                ? `Updated ${formatRelativeTime(new Date(dataUpdatedAt).toISOString())}`
-                : "Live"}
+              {isOffline ? (
+                <>
+                  <Wifi className="h-3 w-3 text-rose-400" />
+                  <span className="text-rose-400 font-semibold">Offline</span>
+                </>
+              ) : (
+                <>
+                  <Wifi className="h-3 w-3 text-emerald-400 animate-pulse" />
+                  {dataUpdatedAt > 0
+                    ? `Updated ${formatRelativeTime(new Date(dataUpdatedAt).toISOString())}`
+                    : "Live"}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -135,9 +164,25 @@ export function QueueManagementPanel() {
             ))}
           </div>
         ) : queue.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Users className="h-10 w-10 mb-2 opacity-20" />
-            <p className="text-sm">No clients currently waiting</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-6 group">
+              <Users className="h-8 w-8 text-blue-400/50 group-hover:text-blue-400 transition-colors" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">No clients waiting</h3>
+            <p className="text-sm text-muted-foreground max-w-[280px] mb-8 leading-relaxed">
+              The queue is currently empty. You can scan new clients or monitor analytics while you wait.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 px-4 gap-2 border-white/10 hover:bg-white/5"
+                onClick={() => setQrOpen(true)}
+              >
+                <QrCode className="h-4 w-4 text-cyan-400" />
+                Show Check-In QR
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -167,11 +212,14 @@ export function QueueManagementPanel() {
                   </tr>
                 ) : null}
                 {filteredQueue.map((item) => {
+                  const isProcessing = item.queuePosition === 0;
                   const isNext = item.queuePosition === 1;
                   const urgency = getUrgency(item.checkedInAt);
                   const { row: urgencyRow, time: urgencyTime } = URGENCY_STYLE[urgency];
 
-                  const rowClass = isNext
+                  const rowClass = isProcessing
+                    ? "bg-purple-500/[0.08] border-l-2 border-l-purple-400"
+                    : isNext
                     ? "bg-blue-500/[0.06] border-l-2 border-l-blue-400/70"
                     : urgencyRow;
 
@@ -182,13 +230,17 @@ export function QueueManagementPanel() {
                       >
                         {/* # */}
                         <td className="pl-5 pr-4 py-3">
-                          <span
-                            className={`text-base font-black tabular-nums ${
-                              isNext ? "text-blue-300" : "gradient-text"
-                            }`}
-                          >
-                            {String(item.queueNumber).padStart(3, "0")}
-                          </span>
+                          {isProcessing ? (
+                            <span className="text-xs font-black text-purple-400 tracking-wider">SERVING</span>
+                          ) : (
+                            <span
+                              className={`text-base font-black tabular-nums ${
+                                isNext ? "text-blue-300" : "gradient-text"
+                              }`}
+                            >
+                              {String(item.queueNumber).padStart(3, "0")}
+                            </span>
+                          )}
                         </td>
 
                         {/* Client */}
@@ -209,15 +261,17 @@ export function QueueManagementPanel() {
 
                         {/* Waiting */}
                         <td className="px-4 py-3">
-                          <span className={`text-xs tabular-nums ${isNext ? "text-muted-foreground" : urgencyTime}`}>
-                            {formatWaitTime(item.checkedInAt)}
+                          <span className={`text-xs tabular-nums ${isProcessing ? 'text-purple-400/80 font-semibold' : isNext ? "text-muted-foreground" : urgencyTime}`}>
+                            {isProcessing ? "Now Processing" : formatWaitTime(item.checkedInAt)}
                           </span>
                         </td>
 
                         {/* Est. wait */}
                         <td className="px-4 py-3">
                           <span className="text-xs font-semibold text-cyan-400 tabular-nums">
-                            {item.estimatedWaitMinutes === 0
+                            {isProcessing
+                              ? "—"
+                              : item.estimatedWaitMinutes === 0
                               ? "Next!"
                               : `~${item.estimatedWaitMinutes}m`}
                           </span>
@@ -225,15 +279,27 @@ export function QueueManagementPanel() {
 
                         {/* Action */}
                         <td className="pr-5 pl-4 py-3 text-right">
-                          <Button
-                            size="sm"
-                            variant={isNext ? "default" : "outline"}
-                            className="h-7 text-xs"
-                            onClick={() => setSelectedClient(item)}
-                          >
-                            <UserCheck className="h-3.5 w-3.5" />
-                            {isNext ? "Call Next" : "Process"}
-                          </Button>
+                          {isProcessing ? (
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-purple-500 hover:bg-purple-600 font-semibold"
+                              onClick={() => completeMutation.mutate(item.sessionId)}
+                              disabled={completeMutation.isPending}
+                            >
+                              <UserCheck className="h-3.5 w-3.5" />
+                              Complete
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant={isNext ? "default" : "outline"}
+                              className="h-7 text-xs"
+                              onClick={() => setSelectedClient(item)}
+                            >
+                              <UserCheck className="h-3.5 w-3.5" />
+                              {isNext ? "Call Next" : "Process"}
+                            </Button>
+                          )}
                         </td>
                       </tr>
 
@@ -260,6 +326,21 @@ export function QueueManagementPanel() {
         open={!!selectedClient}
         onClose={() => setSelectedClient(null)}
       />
+
+      {/* QR Code Dialog Local */}
+      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Client Check-In QR</DialogTitle>
+            <DialogDescription>
+              Clients can scan this to join the live queue.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <QRCodePanel />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

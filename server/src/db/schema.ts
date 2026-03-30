@@ -61,6 +61,7 @@ export const sessions = pgTable(
     checkedInAt: timestamp("checked_in_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    calledUpAt: timestamp("called_up_at", { withTimezone: true }),
     checkedOutAt: timestamp("checked_out_at", { withTimezone: true }),
   },
   (t) => ({

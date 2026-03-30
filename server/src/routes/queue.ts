@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { db } from "../db/connection.js";
 import { sessions } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import {
   getQueuePosition,
   getOrderedQueue,
@@ -11,6 +11,7 @@ import {
   deregisterSession,
   initQueueMap,
   queueEvents,
+  recordHeartbeat,
 } from "../services/queue.service.js";
 import { staffAuth } from "../middleware/staffAuth.js";
 
@@ -21,9 +22,8 @@ export const queueRoutes = new Hono()
     const ordered = getOrderedQueue();
     if (ordered.length === 0) return c.json([]);
 
-    // Fetch session details for all waiting sessions (one query)
     const sessionDetails = await db.query.sessions.findMany({
-      where: eq(sessions.status, "waiting"),
+      where: inArray(sessions.status, ["waiting", "in_progress"]),
     });
 
     // O(1) Map lookup per session
@@ -35,7 +35,6 @@ export const queueRoutes = new Hono()
       for (const o of orphaned) deregisterSession(o.sessionId);
       // Re-fetch the pruned list
       const pruned = getOrderedQueue();
-      if (pruned.length === 0) return c.json([]);
       const queueList = pruned.map((o, idx) => {
         const detail = detailMap.get(o.sessionId)!;
         return {
@@ -64,7 +63,20 @@ export const queueRoutes = new Hono()
       };
     });
 
-    return c.json(queueList);
+    // Gather in_progress
+    const inProgress = sessionDetails
+      .filter((s) => s.status === "in_progress")
+      .map((s) => ({
+        sessionId: s.id,
+        clientName: s.name,
+        purpose: s.purpose,
+        queueNumber: s.queueNumber,
+        queuePosition: 0,
+        checkedInAt: s.checkedInAt.toISOString(),
+        estimatedWaitMinutes: 0,
+      }));
+
+    return c.json([...inProgress, ...queueList].filter(Boolean));
   })
 
   // GET /api/queue/depth — Current queue count
@@ -109,7 +121,7 @@ export const queueRoutes = new Hono()
 
     const updated = await db
       .update(sessions)
-      .set({ status: "in_progress" })
+      .set({ status: "in_progress", calledUpAt: new Date() })
       .where(eq(sessions.id, sessionId))
       .returning({ id: sessions.id });
 
@@ -123,9 +135,25 @@ export const queueRoutes = new Hono()
     return c.json({ success: true, sessionId });
   })
 
+  // PATCH /api/queue/:sessionId/complete
+  .patch("/:sessionId/complete", staffAuth, async (c) => {
+    const sessionId = c.req.param("sessionId");
+    
+    await db
+      .update(sessions)
+      .set({ status: "completed", checkedOutAt: new Date() })
+      .where(eq(sessions.id, sessionId));
+
+    queueEvents.emit("change");
+    return c.json({ success: true });
+  })
+
   // GET /api/queue/position/:sessionId — O(1) position lookup
   .get("/position/:sessionId", (c) => {
     const sessionId = c.req.param("sessionId");
+    
+    recordHeartbeat(sessionId);
+    
     const position = getQueuePosition(sessionId);
 
     if (position === null) {

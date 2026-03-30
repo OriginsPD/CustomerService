@@ -59,12 +59,6 @@ const NAV = {
     icon: BarChart3,
     description: "Analytics & queue mgmt",
   },
-  evaluation: {
-    to: "/evaluation",
-    label: "Evaluation",
-    icon: FlaskConical,
-    description: "Framework comparison",
-  },
 } as const;
 
 // ── NavContent ────────────────────────────────────────────────────────────────
@@ -83,10 +77,10 @@ function NavContent({ onNavClick }: NavContentProps) {
   // ── Per-role nav item lists ────────────────────────────────────────────────
   const navItems =
     role === "staff"
-      ? [NAV.dashboard, NAV.evaluation]          // staff: dashboard + eval only
+      ? [NAV.dashboard]          // staff: dashboard only
       : role === "client"
-        ? [NAV.queue, NAV.evaluation]             // client: queue + eval only
-        : [NAV.checkIn, NAV.evaluation];          // anonymous: check-in + eval
+        ? [NAV.queue]             // client: queue only
+        : [NAV.checkIn];          // anonymous: check-in only
 
   // ── Logout — always returns staff to login page ────────────────────────────
   const handleLogout = () => {
@@ -98,13 +92,13 @@ function NavContent({ onNavClick }: NavContentProps) {
   return (
     <>
       {/* Brand */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-white/[0.06]">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-500/30">
-          <Brain className="h-5 w-5 text-white" />
+      <div className="flex items-center gap-3 px-6 py-6 border-b border-white/[0.06] bg-white/[0.02]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-500/30 ring-1 ring-white/20">
+          <Brain className="h-6 w-6 text-white" />
         </div>
         <div>
-          <p className="text-sm font-bold gradient-text tracking-wide">VCC</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+          <p className="text-base font-black gradient-text tracking-tight uppercase">VCC</p>
+          <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-[0.2em] -mt-0.5 opacity-70">
             Customer Care
           </p>
         </div>
@@ -153,24 +147,31 @@ function NavContent({ onNavClick }: NavContentProps) {
         {role === "staff" && (
           // ── Staff: username badge + sign-out ──────────────────────────────
           <>
-            <div className="glass-card px-3 py-2 flex items-center gap-2">
-              <ShieldCheck className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-foreground truncate">
-                  {staffSession?.username ?? "Staff"}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  Staff session active
-                </p>
+          <>
+            <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-3 shadow-inner">
+              <div className="flex items-center gap-3 mb-3 px-1">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20 shadow-sm">
+                  <ShieldCheck className="h-4 w-4 text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold text-foreground truncate">
+                    {staffSession?.username ?? "Staff Admin"}
+                  </p>
+                  <p className="text-[10px] text-emerald-400/80 font-medium flex items-center gap-1">
+                    <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+                    Session Active
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-[11px] font-semibold text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-all border border-transparent hover:border-rose-500/20"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Sign Out
+              </button>
             </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign out
-            </button>
+          </>
           </>
         )}
 
@@ -209,14 +210,6 @@ function NavContent({ onNavClick }: NavContentProps) {
               <span className="text-xs text-muted-foreground">System Online</span>
               <div className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <Link
-              to="/staff/login"
-              onClick={onNavClick}
-              className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
-            >
-              <LogIn className="h-3.5 w-3.5" />
-              Staff login
-            </Link>
           </>
         )}
       </div>
@@ -231,8 +224,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const currentPath = routerState.location.pathname;
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Login page and kiosk render without the sidebar — full-screen layouts
-  if (currentPath === "/staff/login" || currentPath.startsWith("/kiosk")) {
+  // Login page, kiosk, and home render without the sidebar — full-screen layouts
+  if (currentPath === "/staff/login" || currentPath.startsWith("/kiosk") || currentPath === "/home") {
     return <>{children}</>;
   }
 

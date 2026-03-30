@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useQueue } from "@/hooks/useQueue";
+import { useQueueStream } from "@/hooks/useQueueStream";
 import { GlossCard } from "@/components/shared/GlossCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/queue/")({
   // anyone who hasn't scanned the QR yet) are redirected to the kiosk.
   beforeLoad: () => {
     if (!localStorage.getItem(MY_SESSION_KEY)) {
-      throw redirect({ to: "/kiosk" });
+      throw redirect({ to: "/check-in" });
     }
   },
   component: QueuePage,
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/queue/")({
 function QueuePage() {
   const navigate = useNavigate();
   const { data: queue = [], isLoading, dataUpdatedAt } = useQueue();
+  const { isOffline } = useQueueStream();
   const [mySessionId, setMySessionId] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -84,6 +86,15 @@ function QueuePage() {
   const cancelClientName =
     myQueueItem?.clientName ?? calledUpSession?.name ?? "";
 
+  // Trigger vibration when called up
+  useEffect(() => {
+    if (isCalledUp && calledUpSession?.status === "in_progress") {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate([200, 100, 200, 100, 500]);
+      }
+    }
+  }, [isCalledUp, calledUpSession?.status]);
+
   return (
     <div className="p-4 md:p-8">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
@@ -95,9 +106,13 @@ function QueuePage() {
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground glass-card px-3 py-2">
-          <Wifi className="h-3 w-3 text-emerald-400 animate-pulse" />
-          Auto-refreshes every 15s
-          {dataUpdatedAt > 0 && (
+          {isOffline ? (
+            <Wifi className="h-3 w-3 text-rose-400" />
+          ) : (
+            <Wifi className="h-3 w-3 text-emerald-400 animate-pulse" />
+          )}
+          {isOffline ? "Offline - Reconnecting..." : "Live"}
+          {!isOffline && dataUpdatedAt > 0 && (
             <span className="text-muted-foreground/50">
               · {formatRelativeTime(new Date(dataUpdatedAt).toISOString())}
             </span>
@@ -122,6 +137,11 @@ function QueuePage() {
                 ? "You're next!"
                 : `~${myQueueItem.estimatedWaitMinutes} min`}
             </p>
+            {myQueueItem.purpose && (
+              <p className="text-xs text-blue-400 mt-2 italic">
+                Tip: Have any related documents ready for your {myQueueItem.purpose.toLowerCase()} session.
+              </p>
+            )}
           </div>
           <Button
             variant="ghost"
@@ -137,18 +157,21 @@ function QueuePage() {
 
       {/* ── Called-up card — shown when staff has processed this client ────── */}
       {isCalledUp && calledUpSession?.status === "in_progress" && (
-        <GlossCard className="mb-6 border-emerald-500/30">
+        <GlossCard className="mb-6 border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-[pulse_2s_ease-in-out_infinite]">
           <div className="flex items-start gap-4 py-2">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/30">
-              <Bell className="h-5 w-5 text-emerald-400" />
+              <Bell className="h-5 w-5 text-emerald-400 animate-[bounce_1s_infinite]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground mb-0.5">
+              <p className="text-sm font-semibold text-foreground mb-0.5 text-emerald-400">
                 You've been called up!
               </p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                A staff member is ready for you. Please proceed to the
-                service desk, then submit your feedback when you're done.
+              <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                A staff member is ready for you. Please proceed to the service desk.
+                <br />
+                <span className="inline-block mt-2 font-semibold text-emerald-400/80">
+                  Once your session is complete, please submit your feedback below.
+                </span>
               </p>
               <div className="flex flex-wrap gap-2 mt-3">
                 <Button
@@ -163,15 +186,6 @@ function QueuePage() {
                 >
                   <ClipboardList className="h-3.5 w-3.5" />
                   Submit Feedback
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-xs h-7 text-rose-400/80 hover:text-rose-400 hover:bg-rose-500/10"
-                  onClick={() => setCancelOpen(true)}
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  Cancel my session
                 </Button>
               </div>
             </div>

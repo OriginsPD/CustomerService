@@ -5,6 +5,8 @@ import {
   getKeywords,
   getAILog,
   getInsights,
+  getHourlyHeatmap,
+  getSentimentByPurpose,
 } from "../services/analytics.service.js";
 
 export const dashboardRoutes = new Hono()
@@ -40,4 +42,16 @@ export const dashboardRoutes = new Hono()
   .get("/insights", async (c) => {
     const insights = await getInsights();
     return c.json(insights);
+  })
+
+  // GET /api/dashboard/heatmap — 24-hr layout of queue arrivals
+  .get("/heatmap", async (c) => {
+    const data = await getHourlyHeatmap();
+    return c.json(data);
+  })
+
+  // GET /api/dashboard/sentiment-purpose — Crosstab of feedback vs purpose
+  .get("/sentiment-purpose", async (c) => {
+    const data = await getSentimentByPurpose();
+    return c.json(data);
   });

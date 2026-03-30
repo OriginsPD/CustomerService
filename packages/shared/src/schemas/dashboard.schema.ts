@@ -48,9 +48,27 @@ export const DashboardSummarySchema = z.object({
   sentimentDistribution: SentimentDistributionSchema,
   activeQuestionsCount: z.number(),
   lastAiRunAt: z.string().datetime().nullable(),
+  avgWaitTimeMinutes: z.number().optional(),
+  avgHandleTimeMinutes: z.number().optional(),
+  abandonmentRatePct: z.number().optional(),
 });
 
 export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;
+
+export const HourlyHeatmapSchema = z.object({
+  hour: z.number(),
+  count: z.number(),
+});
+export type HourlyHeatmap = z.infer<typeof HourlyHeatmapSchema>;
+
+export const SentimentPurposeSchema = z.object({
+  purpose: z.string(),
+  positive: z.number(),
+  neutral: z.number(),
+  negative: z.number(),
+  total: z.number(),
+});
+export type SentimentPurpose = z.infer<typeof SentimentPurposeSchema>;
 
 export const QueueItemSchema = z.object({
   sessionId: z.string(),

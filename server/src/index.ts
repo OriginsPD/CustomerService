@@ -8,12 +8,12 @@ import { logger } from "./lib/logger.js";
 import { checkinRoutes } from "./routes/checkin.js";
 import { checkoutRoutes } from "./routes/checkout.js";
 import { queueRoutes } from "./routes/queue.js";
-import { questionRoutes } from "./routes/questions.js";
 import { feedbackRoutes } from "./routes/feedback.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { adminRoutes } from "./routes/admin.js";
 import { authRoutes } from "./routes/auth.js";
-import { initQueueMap } from "./services/queue.service.js";
+import { questionsRoutes } from "./routes/questions.js";
+import { initQueueMap, startQueueEngine } from "./services/queue.service.js";
 import { startScheduler } from "./services/scheduler.service.js";
 
 const PORT = parseInt(process.env.PORT ?? "3001", 10);
@@ -57,12 +57,12 @@ const api = new Hono()
   .route("/checkin", checkinRoutes)
   .route("/checkout", checkoutRoutes)
   .route("/queue", queueRoutes)
-  .route("/questions", questionRoutes)
-  .route("/feedback", feedbackRoutes)
-  .route("/dashboard", dashboardRoutes)
-  .route("/admin", adminRoutes);
+  .route("/feedback", feedbackRoutes);
 
 app.route("/api", api);
+app.route("/api/dashboard", dashboardRoutes);
+app.route("/api/admin", adminRoutes);
+app.route("/api/questions", questionsRoutes);
 
 // ── Global error boundary — catches any unhandled thrown errors in routes ─────
 app.onError((err, c) => {
@@ -91,6 +91,9 @@ async function bootstrap() {
   try {
     // Initialize in-memory queue map from DB
     await initQueueMap();
+
+    // Start Phase 5 Dynamic Queue Engine (Wait estimates & No-Show Sweeper)
+    startQueueEngine();
 
     // Start 24h AI analysis scheduler
     startScheduler();

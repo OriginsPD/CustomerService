@@ -140,7 +140,7 @@ Comment: "${comment.replace(/"/g, '\\"')}"`;
  * Called by the 24h scheduler.
  */
 export async function generateAdaptiveQuestions(
-  feedbackBatch: Array<{ comment: string; rating: number; answers: Record<string, string> }>,
+  feedbackBatch: Array<{ comment: string; rating: number; totalDurationMinutes: number; answers: Record<string, string> }>,
   existingQuestions: DynamicQuestion[]
 ): Promise<AIDecision[]> {
   if (feedbackBatch.length === 0) return [];
@@ -161,6 +161,7 @@ Decide which questions to keep, remove, or add. Rules:
 - Maximum 5 active questions total
 - Remove: low engagement or repetitive answers
 - Add: target emerging pain points or data gaps
+- CRITICAL WAIT TIME RULE: If totalDurationMinutes is frequently high (e.g. > 15 mins), you MUST autonomously drop an existing question if necessary and add a dynamic feedback question specifically asking about their wait time experience.
 - Keep reasoning concise and evidence-based
 
 Return ONLY valid JSON array (no markdown):
@@ -179,6 +180,74 @@ Return ONLY valid JSON array (no markdown):
 
   logger.info("[AI] Using no-op adaptive decisions (AI unavailable).");
   return [];
+}
+
+/**
+ * Generates 3 random, diverse feedback questions on-demand.
+ * Used by GET /api/questions/random.
+ */
+export async function generateRandomQuestions(): Promise<
+  Array<{ text: string; type: "text" | "boolean" | "scale" }>
+> {
+  const prompt = `Generate exactly 3 diverse and engaging feedback questions for a customer service office to ask a client during checkout.
+Rules:
+- 1 question MUST be "scale" type (1-5 rating)
+- 1 question MUST be "boolean" type (Yes/No)
+- 1 question MUST be "text" type (Open-ended)
+- Questions should be professional, concise, and vary each time (e.g. ask about staff friendliness, wait time, facility cleanliness, or ease of process).
+- Return ONLY valid JSON array (no markdown):
+[
+  { "text": "Was our staff friendly today?", "type": "boolean" },
+  { "text": "How would you rate the cleanliness of our waiting area?", "type": "scale" },
+  { "text": "What is one thing we could do better next time?", "type": "text" }
+]`;
+
+  const raw = await callAI(prompt, 300);
+
+  if (raw) {
+    try {
+      const parsed = safeParseJSON(raw);
+      const schema = z.array(
+        z.object({
+          text: z.string(),
+          type: z.enum(["text", "boolean", "scale"]),
+        })
+      );
+      return schema.parse(parsed);
+    } catch {
+      // fall through
+    }
+  }
+
+  const booleans = [
+    "Was the staff helpful during your visit?",
+    "Did you find the office easy to locate?",
+    "Was your primary concern resolved today?",
+    "Did our staff explain the process clearly?",
+    "Would you recommend our service to others?"
+  ];
+  const scales = [
+    "How satisfied are you with the speed of service?",
+    "How would you rate the cleanliness of our facility?",
+    "How easy was it to complete your check-in?",
+    "How professional did you find our team?",
+    "Overall, how would you rate your experience today?"
+  ];
+  const texts = [
+    "Do you have any other comments or suggestions?",
+    "What is one thing we could do better next time?",
+    "Is there anyone from our team you'd like to recognize?",
+    "Was there anything confusing about your visit?",
+    "What was the highlight of your visit today?"
+  ];
+
+  const pick = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+
+  return [
+    { text: pick(booleans), type: "boolean" },
+    { text: pick(scales), type: "scale" },
+    { text: pick(texts), type: "text" },
+  ];
 }
 
 /**

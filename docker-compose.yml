@@ -28,14 +28,14 @@ services:
       - .env                              # DATABASE_URL, OPENCODE_API_KEY, PORT
     environment:
       PORT: "3001"
-      CLIENT_URL: "http://localhost:5173"
+      CLIENT_URL: "http://localhost:5174"
       NODE_ENV: development
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     dns:
       - 8.8.8.8
       - 8.8.4.4
     ports:
-      - "3001:3001"                       # expose for direct API testing
+      - "127.0.0.1:9001:3001"             # localhost only to avoid port conflicts
     volumes:
       # ── Source bind-mounts (changes reflect immediately) ──
       - ./server/src:/app/server/src
@@ -64,7 +64,7 @@ services:
       VITE_API_TARGET: "http://server:3001"   # proxy → server container
       NODE_ENV: development
     ports:
-      - "5173:5173"                       # browser connects here
+      - "127.0.0.1:5174:5173"             # localhost only
     volumes:
       # ── Source bind-mounts ──
       - ./client/src:/app/client/src

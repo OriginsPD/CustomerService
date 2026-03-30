@@ -6,6 +6,8 @@ import type {
   TrendPoint,
   Keyword,
   OperationalInsight,
+  HourlyHeatmap,
+  SentimentPurpose,
 } from "@vcc/shared";
 
 export function useDashboardSummary() {
@@ -21,6 +23,22 @@ export function useTrends(days = 30) {
   return useQuery({
     queryKey: queryKeys.trends(days),
     queryFn: () => api.dashboard.trends(days) as Promise<TrendPoint[]>,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useHourlyHeatmap() {
+  return useQuery({
+    queryKey: ["dashboard", "heatmap"],
+    queryFn: () => api.dashboard.heatmap() as Promise<HourlyHeatmap[]>,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useSentimentByPurpose() {
+  return useQuery({
+    queryKey: ["dashboard", "sentimentPurpose"],
+    queryFn: () => api.dashboard.sentimentPurpose() as Promise<SentimentPurpose[]>,
     staleTime: 5 * 60 * 1000,
   });
 }

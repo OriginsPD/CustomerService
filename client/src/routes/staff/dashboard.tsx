@@ -12,10 +12,15 @@ import {
   Users,
   MessageSquare,
   BarChart3,
+  Clock,
+  TrendingUp,
+  Monitor,
+  Percent,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { useDashboardSummary } from "@/hooks/useDashboard";
 import { Button } from "@/components/ui/button";
+import { GlossCard } from "@/components/shared/GlossCard";
 import {
   Dialog,
   DialogContent,
@@ -46,7 +51,7 @@ function StaffDashboardLayout() {
   const [qrOpen, setQrOpen] = useState(false);
 
   const session = auth.getSession();
-  const { refetch: refetchSummary } = useDashboardSummary();
+  const { data: summary, refetch: refetchSummary } = useDashboardSummary();
 
   const handleRunAnalysis = async () => {
     setIsRunningAnalysis(true);
@@ -89,7 +94,6 @@ function StaffDashboardLayout() {
 
   const navItems = [
     { label: "Live Queue", to: "/staff/dashboard/queue", icon: Users },
-    { label: "Questions", to: "/staff/dashboard/questions", icon: MessageSquare },
     { label: "Analytics", to: "/staff/dashboard/analytics", icon: BarChart3 },
   ];
 
@@ -102,10 +106,6 @@ function StaffDashboardLayout() {
             <h1 className="text-3xl font-black gradient-text">
               Staff Dashboard
             </h1>
-            <span className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[11px] text-blue-300">
-              <ShieldCheck className="h-3 w-3" />
-              {session?.username ?? "Staff"}
-            </span>
           </div>
           <p className="text-muted-foreground text-sm">
             Manage the live queue and review customer analytics.
@@ -113,19 +113,42 @@ function StaffDashboardLayout() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-          <Button variant="outline" size="sm" onClick={() => setQrOpen(true)}>
+          <div className="flex items-center gap-1.5 mr-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-white"
+              onClick={() => refetchSummary()}
+              title="Refresh data"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <div className="h-4 w-px bg-white/10 mx-1" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-white gap-1.5"
+              onClick={handleExportCsv}
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export
+            </Button>
+          </div>
+
+          <Button variant="outline" size="sm" onClick={() => setQrOpen(true)} className="h-9">
             <QrCode className="h-4 w-4" />
             Show QR
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setAiLogOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setAiLogOpen(true)} className="h-9">
             <Brain className="h-4 w-4" />
             AI Logic
           </Button>
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={handleRunAnalysis}
             disabled={isRunningAnalysis}
+            className="h-9 bg-blue-600 hover:bg-blue-500 text-white border-none shadow-lg shadow-blue-500/20"
           >
             {isRunningAnalysis ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -134,33 +157,36 @@ function StaffDashboardLayout() {
             )}
             Run Analysis
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => refetchSummary()}
-            title="Refresh data"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            title="Export feedback as CSV"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </Button>
         </div>
+      </div>
+
+      {/* ── Quick Stats ────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          label="Visits Today"
+          value={summary?.totalVisitsToday ?? 0}
+          icon={Users}
+          trend={summary?.totalVisitsToday ? "+12%" : undefined}
+          color="text-blue-400"
+        />
+        <StatCard
+          label="Avg Wait"
+          value={summary?.avgWaitTimeMinutes ? `${summary.avgWaitTimeMinutes}m` : "—"}
+          icon={Clock}
+          color="text-cyan-400"
+        />
+        <StatCard
+          label="Avg Handle"
+          value={summary?.avgHandleTimeMinutes ? `${summary.avgHandleTimeMinutes}m` : "—"}
+          icon={Monitor}
+          color="text-purple-400"
+        />
+        <StatCard
+          label="Satisfaction"
+          value={summary?.avgRatingToday ? `${summary.avgRatingToday.toFixed(1)}/5` : "—"}
+          icon={TrendingUp}
+          color="text-emerald-400"
+        />
       </div>
 
       {/* ── Navigation Tabs ─────────────────────────────────────────────────── */}
@@ -209,5 +235,43 @@ function StaffDashboardLayout() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  trend,
+  color,
+}: {
+  label: string;
+  value: string | number;
+  icon: any;
+  trend?: string;
+  color: string;
+}) {
+  return (
+    <GlossCard className="py-4 px-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+            {label}
+          </p>
+          <p className="text-2xl font-black gradient-text tabular-nums leading-none">
+            {value}
+          </p>
+          {trend && (
+            <p className="text-[10px] text-emerald-400 mt-1.5 font-medium flex items-center gap-1">
+              <TrendingUp className="h-2.5 w-2.5" />
+              {trend} vs yesterday
+            </p>
+          )}
+        </div>
+        <div className={cn("p-2 rounded-lg bg-white/[0.03] border border-white/[0.05]", color)}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+    </GlossCard>
   );
 }

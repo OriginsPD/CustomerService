@@ -17,6 +17,7 @@ export async function getDashboardSummary() {
     currentQueue,
     activeQuestionsCount,
     lastAiRun,
+    advancedStatsData,
   ] = await Promise.all([
     // Total sessions all time
     db.select({ count: count() }).from(sessions),
@@ -63,6 +64,17 @@ export async function getDashboardSummary() {
       .from(aiDecisionLog)
       .orderBy(desc(aiDecisionLog.runAt))
       .limit(1),
+
+    // Advanced Metrics Today (Wait Time, Support Time, Abandonment)
+    db
+      .select({
+        avgWaitSeconds: sql<number>`AVG(EXTRACT(EPOCH FROM (${sessions.calledUpAt} - ${sessions.checkedInAt})))`,
+        avgHandleSeconds: sql<number>`AVG(EXTRACT(EPOCH FROM (${sessions.checkedOutAt} - ${sessions.calledUpAt})))`,
+        totalCancelledToday: sql<number>`SUM(CASE WHEN ${sessions.status} = 'cancelled' THEN 1 ELSE 0 END)`,
+        totalJoinedToday: count(),
+      })
+      .from(sessions)
+      .where(gte(sessions.checkedInAt, today)),
   ]);
 
   // Build sentiment distribution map
@@ -76,6 +88,11 @@ export async function getDashboardSummary() {
   }
   const total = sentimentMap.positive + sentimentMap.neutral + sentimentMap.negative;
   const positivePct = total > 0 ? Math.round((sentimentMap.positive / total) * 100) : 0;
+
+  const advanced = advancedStatsData?.[0] || { avgWaitSeconds: 0, avgHandleSeconds: 0, totalCancelledToday: 0, totalJoinedToday: 0 };
+  const abandonmentRate = advanced.totalJoinedToday > 0 
+    ? Math.round((Number(advanced.totalCancelledToday) / Number(advanced.totalJoinedToday)) * 100) 
+    : 0;
 
   return {
     totalVisitsAllTime: Number(totalVisitsAllTime[0]?.count ?? 0),
@@ -92,6 +109,9 @@ export async function getDashboardSummary() {
     },
     activeQuestionsCount: Number(activeQuestionsCount[0]?.count ?? 0),
     lastAiRunAt: lastAiRun[0]?.runAt?.toISOString() ?? null,
+    avgWaitTimeMinutes: advanced.avgWaitSeconds ? Math.round(Number(advanced.avgWaitSeconds) / 60) : 0,
+    avgHandleTimeMinutes: advanced.avgHandleSeconds ? Math.round(Number(advanced.avgHandleSeconds) / 60) : 0,
+    abandonmentRatePct: abandonmentRate,
   };
 }
 
@@ -179,4 +199,49 @@ export async function getAILog(page = 1, pageSize = 20) {
     pageSize,
     totalPages: Math.ceil(Number(totalCount[0]?.count ?? 0) / pageSize),
   };
+}
+
+/** Returns 24-hour heatmap data from the last 30 days */
+export async function getHourlyHeatmap() {
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+  
+  const rows = await db
+    .select({
+      hour: sql<number>`EXTRACT(HOUR FROM ${sessions.checkedInAt})`.as("hour"),
+      count: count(),
+    })
+    .from(sessions)
+    .where(gte(sessions.checkedInAt, since))
+    .groupBy(sql`EXTRACT(HOUR FROM ${sessions.checkedInAt})`)
+    .orderBy(sql`EXTRACT(HOUR FROM ${sessions.checkedInAt})`);
+
+  return rows.map(r => ({
+    hour: Number(r.hour),
+    count: Number(r.count)
+  }));
+}
+
+/** Returns sentiment distribution broken down by purpose */
+export async function getSentimentByPurpose() {
+  const rows = await db
+    .select({
+      purpose: sessions.purpose,
+      positive: sql<number>`SUM(CASE WHEN ${feedback.sentiment} = 'positive' THEN 1 ELSE 0 END)`,
+      neutral: sql<number>`SUM(CASE WHEN ${feedback.sentiment} = 'neutral' THEN 1 ELSE 0 END)`,
+      negative: sql<number>`SUM(CASE WHEN ${feedback.sentiment} = 'negative' THEN 1 ELSE 0 END)`,
+      total: count(),
+    })
+    .from(feedback)
+    .innerJoin(sessions, eq(feedback.sessionId, sessions.id))
+    .groupBy(sessions.purpose)
+    .orderBy(desc(count()));
+
+  return rows.map(r => ({
+    purpose: r.purpose,
+    positive: Number(r.positive ?? 0),
+    neutral: Number(r.neutral ?? 0),
+    negative: Number(r.negative ?? 0),
+    total: Number(r.total)
+  }));
 }

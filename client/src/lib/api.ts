@@ -112,11 +112,15 @@ export const api = {
     /** Staff: mark client as processed, remove from live queue */
     processClient: (sessionId: string) =>
       staffRequest(`/queue/${sessionId}/process`, { method: "PATCH" }),
+    /** Staff: fully Complete a processing client directly */
+    completeClient: (sessionId: string) =>
+      staffRequest(`/queue/${sessionId}/complete`, { method: "PATCH" }),
   },
 
   // Questions
   questions: {
     active: () => request("/questions/active"),
+    random: () => request("/questions/random"),
     add: (body: { text: string; type?: string }) =>
       staffRequest("/questions", { method: "POST", body: JSON.stringify(body) }),
     deactivate: (id: string) =>
@@ -131,6 +135,8 @@ export const api = {
     aiLog: (page = 1, pageSize = 20) =>
       request(`/dashboard/ai-log?page=${page}&pageSize=${pageSize}`),
     insights: () => request("/dashboard/insights"),
+    heatmap: () => request("/dashboard/heatmap"),
+    sentimentPurpose: () => request("/dashboard/sentiment-purpose"),
   },
 
   // Feedback export

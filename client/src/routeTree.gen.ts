@@ -9,11 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HomeRouteImport } from './routes/home'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as QueueIndexRouteImport } from './routes/queue/index'
 import { Route as KioskIndexRouteImport } from './routes/kiosk/index'
-import { Route as EvaluationIndexRouteImport } from './routes/evaluation/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as CheckInIndexRouteImport } from './routes/check-in/index'
 import { Route as StaffLoginRouteImport } from './routes/staff/login'
@@ -21,9 +21,13 @@ import { Route as StaffDashboardRouteImport } from './routes/staff/dashboard'
 import { Route as CheckOutSessionIdRouteImport } from './routes/check-out/$sessionId'
 import { Route as StaffDashboardIndexRouteImport } from './routes/staff/dashboard/index'
 import { Route as StaffDashboardQueueRouteImport } from './routes/staff/dashboard/queue'
-import { Route as StaffDashboardQuestionsRouteImport } from './routes/staff/dashboard/questions'
 import { Route as StaffDashboardAnalyticsRouteImport } from './routes/staff/dashboard/analytics'
 
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
@@ -42,11 +46,6 @@ const QueueIndexRoute = QueueIndexRouteImport.update({
 const KioskIndexRoute = KioskIndexRouteImport.update({
   id: '/kiosk/',
   path: '/kiosk/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EvaluationIndexRoute = EvaluationIndexRouteImport.update({
-  id: '/evaluation/',
-  path: '/evaluation/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -84,11 +83,6 @@ const StaffDashboardQueueRoute = StaffDashboardQueueRouteImport.update({
   path: '/queue',
   getParentRoute: () => StaffDashboardRoute,
 } as any)
-const StaffDashboardQuestionsRoute = StaffDashboardQuestionsRouteImport.update({
-  id: '/questions',
-  path: '/questions',
-  getParentRoute: () => StaffDashboardRoute,
-} as any)
 const StaffDashboardAnalyticsRoute = StaffDashboardAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -98,31 +92,29 @@ const StaffDashboardAnalyticsRoute = StaffDashboardAnalyticsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/home': typeof HomeRoute
   '/check-out/$sessionId': typeof CheckOutSessionIdRoute
   '/staff/dashboard': typeof StaffDashboardRouteWithChildren
   '/staff/login': typeof StaffLoginRoute
   '/check-in/': typeof CheckInIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/evaluation/': typeof EvaluationIndexRoute
   '/kiosk/': typeof KioskIndexRoute
   '/queue/': typeof QueueIndexRoute
   '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
-  '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
   '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
   '/staff/dashboard/': typeof StaffDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/home': typeof HomeRoute
   '/check-out/$sessionId': typeof CheckOutSessionIdRoute
   '/staff/login': typeof StaffLoginRoute
   '/check-in': typeof CheckInIndexRoute
   '/dashboard': typeof DashboardIndexRoute
-  '/evaluation': typeof EvaluationIndexRoute
   '/kiosk': typeof KioskIndexRoute
   '/queue': typeof QueueIndexRoute
   '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
-  '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
   '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
   '/staff/dashboard': typeof StaffDashboardIndexRoute
 }
@@ -130,16 +122,15 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/home': typeof HomeRoute
   '/check-out/$sessionId': typeof CheckOutSessionIdRoute
   '/staff/dashboard': typeof StaffDashboardRouteWithChildren
   '/staff/login': typeof StaffLoginRoute
   '/check-in/': typeof CheckInIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/evaluation/': typeof EvaluationIndexRoute
   '/kiosk/': typeof KioskIndexRoute
   '/queue/': typeof QueueIndexRoute
   '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
-  '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
   '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
   '/staff/dashboard/': typeof StaffDashboardIndexRoute
 }
@@ -148,47 +139,44 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/home'
     | '/check-out/$sessionId'
     | '/staff/dashboard'
     | '/staff/login'
     | '/check-in/'
     | '/dashboard/'
-    | '/evaluation/'
     | '/kiosk/'
     | '/queue/'
     | '/staff/dashboard/analytics'
-    | '/staff/dashboard/questions'
     | '/staff/dashboard/queue'
     | '/staff/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
+    | '/home'
     | '/check-out/$sessionId'
     | '/staff/login'
     | '/check-in'
     | '/dashboard'
-    | '/evaluation'
     | '/kiosk'
     | '/queue'
     | '/staff/dashboard/analytics'
-    | '/staff/dashboard/questions'
     | '/staff/dashboard/queue'
     | '/staff/dashboard'
   id:
     | '__root__'
     | '/'
     | '/$'
+    | '/home'
     | '/check-out/$sessionId'
     | '/staff/dashboard'
     | '/staff/login'
     | '/check-in/'
     | '/dashboard/'
-    | '/evaluation/'
     | '/kiosk/'
     | '/queue/'
     | '/staff/dashboard/analytics'
-    | '/staff/dashboard/questions'
     | '/staff/dashboard/queue'
     | '/staff/dashboard/'
   fileRoutesById: FileRoutesById
@@ -196,18 +184,25 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  HomeRoute: typeof HomeRoute
   CheckOutSessionIdRoute: typeof CheckOutSessionIdRoute
   StaffDashboardRoute: typeof StaffDashboardRouteWithChildren
   StaffLoginRoute: typeof StaffLoginRoute
   CheckInIndexRoute: typeof CheckInIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
-  EvaluationIndexRoute: typeof EvaluationIndexRoute
   KioskIndexRoute: typeof KioskIndexRoute
   QueueIndexRoute: typeof QueueIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$': {
       id: '/$'
       path: '/$'
@@ -234,13 +229,6 @@ declare module '@tanstack/react-router' {
       path: '/kiosk'
       fullPath: '/kiosk/'
       preLoaderRoute: typeof KioskIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/evaluation/': {
-      id: '/evaluation/'
-      path: '/evaluation'
-      fullPath: '/evaluation/'
-      preLoaderRoute: typeof EvaluationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -292,13 +280,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffDashboardQueueRouteImport
       parentRoute: typeof StaffDashboardRoute
     }
-    '/staff/dashboard/questions': {
-      id: '/staff/dashboard/questions'
-      path: '/questions'
-      fullPath: '/staff/dashboard/questions'
-      preLoaderRoute: typeof StaffDashboardQuestionsRouteImport
-      parentRoute: typeof StaffDashboardRoute
-    }
     '/staff/dashboard/analytics': {
       id: '/staff/dashboard/analytics'
       path: '/analytics'
@@ -311,14 +292,12 @@ declare module '@tanstack/react-router' {
 
 interface StaffDashboardRouteChildren {
   StaffDashboardAnalyticsRoute: typeof StaffDashboardAnalyticsRoute
-  StaffDashboardQuestionsRoute: typeof StaffDashboardQuestionsRoute
   StaffDashboardQueueRoute: typeof StaffDashboardQueueRoute
   StaffDashboardIndexRoute: typeof StaffDashboardIndexRoute
 }
 
 const StaffDashboardRouteChildren: StaffDashboardRouteChildren = {
   StaffDashboardAnalyticsRoute: StaffDashboardAnalyticsRoute,
-  StaffDashboardQuestionsRoute: StaffDashboardQuestionsRoute,
   StaffDashboardQueueRoute: StaffDashboardQueueRoute,
   StaffDashboardIndexRoute: StaffDashboardIndexRoute,
 }
@@ -330,12 +309,12 @@ const StaffDashboardRouteWithChildren = StaffDashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  HomeRoute: HomeRoute,
   CheckOutSessionIdRoute: CheckOutSessionIdRoute,
   StaffDashboardRoute: StaffDashboardRouteWithChildren,
   StaffLoginRoute: StaffLoginRoute,
   CheckInIndexRoute: CheckInIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
-  EvaluationIndexRoute: EvaluationIndexRoute,
   KioskIndexRoute: KioskIndexRoute,
   QueueIndexRoute: QueueIndexRoute,
 }

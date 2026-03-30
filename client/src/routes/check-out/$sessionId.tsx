@@ -13,23 +13,23 @@ export const Route = createFileRoute("/check-out/$sessionId")({
   beforeLoad: ({ params }) => {
     const storedId = localStorage.getItem(MY_SESSION_KEY);
     if (!storedId || storedId !== params.sessionId) {
-      throw redirect({ to: "/kiosk" });
+      throw redirect({ to: "/check-in" });
     }
   },
 
   // Verify session exists AND pre-fetch active questions before rendering.
-  // An invalid / already-completed sessionId redirects to /kiosk.
+  // An invalid / already-completed sessionId redirects to /check-in.
   loader: async ({ params, context: { queryClient } }) => {
     const session = await api.checkIn.getById(params.sessionId).catch(() => null);
     if (!session || (session as any).error) {
-      throw redirect({ to: "/kiosk" });
+      throw redirect({ to: "/check-in" });
     }
     // Redirect if session is in a state that cannot receive checkout feedback
     const status = (session as any).status as string;
     if (status === "cancelled" || status === "completed") {
-      throw redirect({ to: "/kiosk" });
+      throw redirect({ to: "/check-in" });
     }
-    await queryClient.ensureQueryData(activeQuestionsQueryOptions());
+    await queryClient.ensureQueryData(activeQuestionsQueryOptions(params.sessionId));
   },
 
   component: CheckOutPage,
