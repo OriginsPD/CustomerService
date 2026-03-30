@@ -21,21 +21,21 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.server
-      target: dev                         # uses tsx watch HMR
+      target: dev # uses tsx watch HMR
     container_name: vcc-server
     restart: unless-stopped
     env_file:
-      - .env                              # DATABASE_URL, OPENCODE_API_KEY, PORT
+      - .env # DATABASE_URL, OPENCODE_API_KEY, PORT
     environment:
       PORT: "3001"
-      CLIENT_URL: "http://localhost:5174"
+      CLIENT_URL: "http://localhost:5173"
       NODE_ENV: development
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     dns:
       - 8.8.8.8
       - 8.8.4.4
     ports:
-      - "127.0.0.1:9001:3001"             # localhost only to avoid port conflicts
+      - "127.0.0.1:9001:3001" # localhost only to avoid port conflicts
     volumes:
       # ── Source bind-mounts (changes reflect immediately) ──
       - ./server/src:/app/server/src
@@ -46,7 +46,7 @@ services:
     networks:
       - vcc-net
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:3001/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -57,14 +57,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.client
-      target: dev                         # uses Vite HMR dev server
+      target: dev # uses Vite HMR dev server
     container_name: vcc-client
     restart: unless-stopped
     environment:
-      VITE_API_TARGET: "http://server:3001"   # proxy → server container
+      VITE_API_TARGET: "http://server:3001" # proxy → server container
       NODE_ENV: development
     ports:
-      - "127.0.0.1:5174:5173"             # localhost only
+      - "127.0.0.1:5174:5173" # localhost only
     volumes:
       # ── Source bind-mounts ──
       - ./client/src:/app/client/src
@@ -88,12 +88,13 @@ services:
 
 # ── Named volumes ─────────────────────────────────────────────────────────────
 volumes:
-  server_nm:       # server node_modules (never overwritten by host)
-  server_dist:     # compiled server output
-  client_nm:       # root node_modules
-  client_src_nm:   # client-level node_modules
+  server_nm: # server node_modules (never overwritten by host)
+  server_dist: # compiled server output
+  client_nm: # root node_modules
+  client_src_nm:
+    # client-level node_modules
 
-# ── Network ───────────────────────────────────────────────────────────────────
+    # ── Network ───────────────────────────────────────────────────────────────────
 networks:
   vcc-net:
     driver: bridge

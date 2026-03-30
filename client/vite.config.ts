@@ -40,7 +40,7 @@ export default defineConfig({
     // the WebSocket upgrade fails, tearing down every HTTP connection.
     hmr: {
       host: DEV_HOST,
-      clientPort: 5173,
+      clientPort: 5174,
     },
     proxy: {
       "/api": {
