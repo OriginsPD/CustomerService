@@ -61,3 +61,6 @@ export const auth = {
 
 /** Key used to persist the current customer's session across page refreshes */
 export const MY_SESSION_KEY = "vcc_my_session_id";
+
+/** Key used to store the 24-hour Day Pass from QR scan */
+export const DAY_SESSION_KEY = "vcc_day_session_id";

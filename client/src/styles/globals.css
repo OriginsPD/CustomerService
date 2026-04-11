@@ -65,11 +65,11 @@
 @layer utilities {
   /* Glass card effect — the core VCC surface style */
   .glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    background: rgba(20, 25, 40, 0.4);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 1rem;
+    border-radius: 1.25rem;
   }
 
   /* Gloss overlay — top-edge highlight mimicking a glossy surface */
@@ -152,5 +152,24 @@
     );
     background-size: 200% 100%;
     animation: shimmer 2s linear infinite;
+  }
+
+  /* Micro-animations */
+  .hover-lift {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.3);
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .animate-pop {
+    animation: pop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }

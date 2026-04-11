@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/queryClient";
-import type { QueueItem } from "@vcc/shared";
+import type { QueueItem, Session } from "@vcc/shared";
 
 export function useQueue() {
   return useQuery({
@@ -24,5 +24,13 @@ export function useQueuePosition(sessionId: string) {
     refetchInterval: 15_000,
     staleTime: 0,
     enabled: !!sessionId,
+  });
+}
+
+export function useInProgressQueue() {
+  return useQuery({
+    queryKey: ["queue", "in-progress"],
+    queryFn: () => api.queue.inProgress() as Promise<Session[]>,
+    refetchInterval: 15_000,
   });
 }

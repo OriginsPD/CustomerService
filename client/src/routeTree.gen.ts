@@ -23,10 +23,16 @@ import { Route as StaffDashboardIndexRouteImport } from './routes/staff/dashboar
 import { Route as StaffDashboardQueueRouteImport } from './routes/staff/dashboard/queue'
 import { Route as StaffDashboardQuestionsRouteImport } from './routes/staff/dashboard/questions'
 import { Route as StaffDashboardAnalyticsRouteImport } from './routes/staff/dashboard/analytics'
+import { Route as ScanRouteImport } from './routes/scan'
 
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -98,6 +104,7 @@ const StaffDashboardAnalyticsRoute = StaffDashboardAnalyticsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/scan': typeof ScanRoute
   '/check-out/$sessionId': typeof CheckOutSessionIdRoute
   '/staff/dashboard': typeof StaffDashboardRouteWithChildren
   '/staff/login': typeof StaffLoginRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/scan': typeof ScanRoute
   '/check-out/$sessionId': typeof CheckOutSessionIdRoute
   '/staff/login': typeof StaffLoginRoute
   '/check-in': typeof CheckInIndexRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/scan': typeof ScanRoute
   '/check-out/$sessionId': typeof CheckOutSessionIdRoute
   '/staff/dashboard': typeof StaffDashboardRouteWithChildren
   '/staff/login': typeof StaffLoginRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/scan'
     | '/check-out/$sessionId'
     | '/staff/dashboard'
     | '/staff/login'
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$'
+    | '/scan'
     | '/check-out/$sessionId'
     | '/staff/login'
     | '/check-in'
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$'
+    | '/scan'
     | '/check-out/$sessionId'
     | '/staff/dashboard'
     | '/staff/login'
@@ -196,6 +208,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  ScanRoute: typeof ScanRoute
   CheckOutSessionIdRoute: typeof CheckOutSessionIdRoute
   StaffDashboardRoute: typeof StaffDashboardRouteWithChildren
   StaffLoginRoute: typeof StaffLoginRoute
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/$'
       fullPath: '/$'
       preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -330,6 +350,7 @@ const StaffDashboardRouteWithChildren = StaffDashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  ScanRoute: ScanRoute,
   CheckOutSessionIdRoute: CheckOutSessionIdRoute,
   StaffDashboardRoute: StaffDashboardRouteWithChildren,
   StaffLoginRoute: StaffLoginRoute,

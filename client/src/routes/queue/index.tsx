@@ -64,18 +64,20 @@ function QueuePage() {
     retry: false,
   });
 
-  // If the server reports the session is already completed or cancelled,
-  // the localStorage key is stale — clear it and return to the kiosk.
+  // If the server reports the session is cancelled, return to kiosk.
+  // If it reports completed (by staff), direct them automatically to feedback.
   useEffect(() => {
-    if (!calledUpSession) return;
-    if (
-      calledUpSession.status === "completed" ||
-      calledUpSession.status === "cancelled"
-    ) {
+    if (!calledUpSession || !mySessionId) return;
+    if (calledUpSession.status === "cancelled") {
       localStorage.removeItem(MY_SESSION_KEY);
       navigate({ to: "/kiosk" });
+    } else if (calledUpSession.status === "completed") {
+      navigate({ 
+        to: "/check-out/$sessionId", 
+        params: { sessionId: mySessionId } 
+      });
     }
-  }, [calledUpSession?.status, navigate]);
+  }, [calledUpSession?.status, navigate, mySessionId]);
 
   // Derive the session info needed by the cancellation modal regardless of
   // whether the client is in the waiting queue or already called up.
@@ -163,15 +165,6 @@ function QueuePage() {
                 >
                   <ClipboardList className="h-3.5 w-3.5" />
                   Submit Feedback
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-xs h-7 text-rose-400/80 hover:text-rose-400 hover:bg-rose-500/10"
-                  onClick={() => setCancelOpen(true)}
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  Cancel my session
                 </Button>
               </div>
             </div>

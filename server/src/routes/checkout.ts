@@ -49,7 +49,11 @@ export const checkoutRoutes = new Hono()
         if (session.status === "cancelled") {
           throw Object.assign(new Error("This session was cancelled"), { statusCode: 410 });
         }
-        if (session.status === "completed") {
+
+        const existingFeedback = await tx.query.feedback.findFirst({
+          where: eq(feedback.sessionId, body.sessionId),
+        });
+        if (existingFeedback) {
           throw Object.assign(new Error("Feedback already submitted for this session"), { statusCode: 409 });
         }
 

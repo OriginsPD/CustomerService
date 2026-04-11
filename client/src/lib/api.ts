@@ -106,6 +106,7 @@ export const api = {
   // Queue
   queue: {
     list: () => request("/queue"),
+    inProgress: () => staffRequest("/queue/in-progress"),
     depth: () => request("/queue/depth"),
     position: (sessionId: string) =>
       request(`/queue/position/${sessionId}`),
@@ -145,5 +146,7 @@ export const api = {
   admin: {
     runAnalysis: () =>
       staffRequest("/admin/run-analysis", { method: "POST" }),
+    completeSession: (sessionId: string) =>
+      staffRequest(`/admin/sessions/${sessionId}/complete`, { method: "PATCH" }),
   },
 };

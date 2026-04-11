@@ -11,7 +11,7 @@ interface QRCodePanelProps {
 }
 
 export function QRCodePanel({ url, className }: QRCodePanelProps) {
-  const checkInUrl = url ?? `${window.location.origin}/check-in`;
+  const checkInUrl = url ?? `${window.location.origin}/scan`;
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {

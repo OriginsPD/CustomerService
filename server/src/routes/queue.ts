@@ -67,6 +67,15 @@ export const queueRoutes = new Hono()
     return c.json(queueList);
   })
 
+  // GET /api/queue/in-progress — List of clients currently being processed
+  .get("/in-progress", staffAuth, async (c) => {
+    const inProgress = await db.query.sessions.findMany({
+      where: eq(sessions.status, "in_progress"),
+      orderBy: (sessions, { desc }) => [desc(sessions.checkedInAt)],
+    });
+    return c.json(inProgress);
+  })
+
   // GET /api/queue/depth — Current queue count
   .get("/depth", (c) => {
     return c.json({ depth: getQueueDepth() });

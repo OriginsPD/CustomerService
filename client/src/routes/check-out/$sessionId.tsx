@@ -24,9 +24,16 @@ export const Route = createFileRoute("/check-out/$sessionId")({
     if (!session || (session as any).error) {
       throw redirect({ to: "/kiosk" });
     }
-    // Redirect if session is in a state that cannot receive checkout feedback
+    // Redirect if session is cancelled
     const status = (session as any).status as string;
-    if (status === "cancelled" || status === "completed") {
+    if (status === "cancelled") {
+      throw redirect({ to: "/kiosk" });
+    }
+
+    // Redirect if feedback is already submitted
+    const feedback = await api.checkOut.getBySession(params.sessionId).catch(() => null);
+    if (feedback && !(feedback as any).error) {
+      localStorage.removeItem(MY_SESSION_KEY);
       throw redirect({ to: "/kiosk" });
     }
     await queryClient.ensureQueryData(activeQuestionsQueryOptions());

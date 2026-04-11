@@ -151,15 +151,6 @@ function StaffDashboardLayout() {
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </Button>
         </div>
       </div>
 
