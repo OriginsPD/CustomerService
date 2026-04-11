@@ -1,8 +1,9 @@
 /**
  * AI Service — Single boundary for all AI interactions.
  *
- * Integration: @anthropic-ai/sdk (claude-3-5-haiku-20241022)
- * When ANTHROPIC_API_KEY is not set, all functions fall back to
+ *
+ * Integration: @opencode-ai/sdk
+ * When OPENCODE_API_KEY is not set, all functions fall back to
  * lightweight heuristics so the server still operates without AI.
  */
 
@@ -11,23 +12,26 @@ import type { DynamicQuestion } from "../db/schema.js";
 import type { AIDecision } from "@vcc/shared";
 import { logger } from "../lib/logger.js";
 
-// ── Anthropic client (lazy singleton) ─────────────────────────────────────────
+// ── Opencode client (lazy singleton) ──────────────────────────────────────────
 
-let _anthropic: import("@anthropic-ai/sdk").Anthropic | null = null;
+let _opencode: import("@opencode-ai/sdk").OpencodeClient | null = null;
+let _opencodeServer: { close: () => void; url: string } | null = null;
 
-async function getClient(): Promise<import("@anthropic-ai/sdk").Anthropic | null> {
-  if (_anthropic) return _anthropic;
-  if (!process.env.ANTHROPIC_API_KEY) {
-    logger.warn("[AI] ANTHROPIC_API_KEY not set — using built-in heuristics.");
+async function getClient(): Promise<import("@opencode-ai/sdk").OpencodeClient | null> {
+  if (_opencode) return _opencode;
+  if (!process.env.OPENCODE_API_KEY) {
+    logger.warn("[AI] OPENCODE_API_KEY not set — using built-in heuristics.");
     return null;
   }
   try {
-    const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    logger.info("[AI] Anthropic client initialised (claude-3-5-haiku-20241022).");
-    return _anthropic;
+    const { createOpencode } = await import("@opencode-ai/sdk");
+    const instance = await createOpencode();
+    _opencode = instance.client;
+    _opencodeServer = instance.server;
+    logger.info("[AI] Opencode client initialised successfully.");
+    return _opencode;
   } catch (err) {
-    logger.error("[AI] Failed to load @anthropic-ai/sdk", { error: (err as Error).message });
+    logger.error("[AI] Failed to load @opencode-ai/sdk", { error: (err as Error).message });
     return null;
   }
 }
@@ -87,13 +91,27 @@ async function callAI(prompt: string, maxTokens = 400): Promise<string | null> {
   if (!client) return null;
 
   try {
-    const message = await client.messages.create({
-      model: "claude-3-5-haiku-20241022",
-      max_tokens: maxTokens,
-      messages: [{ role: "user", content: prompt }],
+    const sessionRes = await client.session.create();
+    if (!sessionRes.data || sessionRes.error) {
+      throw new Error("Could not create Opencode session.");
+    }
+    const sessionId = sessionRes.data.id;
+
+    const promptRes = await client.session.prompt({
+      path: { id: sessionId },
+      body: { parts: [{ type: "text", text: prompt }] },
     });
-    const block = message.content[0];
-    return block?.type === "text" ? block.text : null;
+
+    if (promptRes.error) {
+       throw new Error("Opencode prompt inference failed.");
+    }
+
+    // Clean up session directly as we are utilizing this framework synchronously
+    client.session.delete({ path: { id: sessionId } }).catch(() => {});
+
+    const info = promptRes.data?.info as any;
+    const textPart = info?.parts?.find((p: any) => p.type === "text");
+    return textPart?.text || null;
   } catch (err) {
     logger.error("[AI] API call failed", { error: (err as Error).message, stack: (err as Error).stack });
     return null;
