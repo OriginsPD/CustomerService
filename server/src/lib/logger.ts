@@ -13,6 +13,7 @@
 import { createLogger, format, transports } from "winston";
 import { join } from "path";
 import { mkdirSync } from "fs";
+import { env } from "../env.js";
 
 // process.cwd() is CustomerService/server/ (tsx watch runs from there).
 // Logs live one level up at CustomerService/logs/ so they are repo-scoped.
@@ -22,7 +23,7 @@ const LOGS_DIR = join(process.cwd(), "..", "logs");
 mkdirSync(LOGS_DIR, { recursive: true });
 
 export const logger = createLogger({
-  level: process.env.LOG_LEVEL ?? "info",
+  level: env.LOG_LEVEL,
   format: format.combine(
     format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     format.errors({ stack: true }),

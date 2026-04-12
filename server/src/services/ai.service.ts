@@ -11,6 +11,7 @@ import { z } from "zod";
 import type { DynamicQuestion } from "../db/schema.js";
 import type { AIDecision } from "@vcc/shared";
 import { logger } from "../lib/logger.js";
+import { env } from "../env.js";
 
 // ── Opencode client (lazy singleton) ──────────────────────────────────────────
 
@@ -19,7 +20,7 @@ let _opencodeServer: { close: () => void; url: string } | null = null;
 
 async function getClient(): Promise<import("@opencode-ai/sdk").OpencodeClient | null> {
   if (_opencode) return _opencode;
-  if (!process.env.OPENCODE_API_KEY) {
+  if (!env.OPENCODE_API_KEY) {
     logger.warn("[AI] OPENCODE_API_KEY not set — using built-in heuristics.");
     return null;
   }

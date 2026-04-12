@@ -1,4 +1,4 @@
-import "dotenv/config";
+import { env } from "./env.js";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -16,8 +16,8 @@ import { authRoutes } from "./routes/auth.js";
 import { initQueueMap } from "./services/queue.service.js";
 import { startScheduler } from "./services/scheduler.service.js";
 
-const PORT = parseInt(process.env.PORT ?? "3001", 10);
-const CLIENT_URL = process.env.CLIENT_URL ?? "http://localhost:5173";
+const PORT = env.PORT;
+const CLIENT_URL = env.CLIENT_URL;
 
 const app = new Hono();
 

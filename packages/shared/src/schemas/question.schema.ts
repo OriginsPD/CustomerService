@@ -29,6 +29,7 @@ export const AIDecisionSchema = z.object({
   questionType: QuestionTypeEnum.optional(),
   questionId: z.string().optional(),
   reasoning: z.string(),
+  confidenceLevel: z.number().optional(),
 });
 
 export type AIDecision = z.infer<typeof AIDecisionSchema>;

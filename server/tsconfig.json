@@ -6,7 +6,6 @@
     "strict": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "declaration": true,
     "esModuleInterop": true,
     "baseUrl": ".",
@@ -14,6 +13,6 @@
       "@vcc/shared": ["../packages/shared/src/index.ts"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../packages/shared/src"],
   "exclude": ["node_modules", "dist"]
 }
