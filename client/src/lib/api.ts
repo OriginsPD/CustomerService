@@ -147,19 +147,30 @@ export const api = {
     
     // SuperAdmin Staff Management
     listStaff: () =>
-      staffRequest("/admin/staff"),
+      staffRequest<{
+        id: string;
+        username: string;
+        fullName: string;
+        role: "superadmin" | "admin" | "agent";
+        isActive: boolean;
+        createdAt: string;
+      }[]>("/admin/staff"),
     createStaff: (body: any) =>
-      staffRequest("/admin/staff", { method: "POST", body: JSON.stringify(body) }),
+      staffRequest<{ id: string }>("/admin/staff", { method: "POST", body: JSON.stringify(body) }),
     updateStaff: (id: string, body: any) =>
-      staffRequest(`/admin/staff/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+      staffRequest<{ success: boolean }>(`/admin/staff/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
     deleteStaff: (id: string) =>
-      staffRequest(`/admin/staff/${id}`, { method: "DELETE" }),
+      staffRequest<{ success: boolean }>(`/admin/staff/${id}`, { method: "DELETE" }),
       
     // SuperAdmin Settings Management
     getSettings: (id: string) =>
-      staffRequest(`/admin/settings/${id}`),
+      staffRequest<{
+        id: string;
+        config: any;
+        updatedAt: string;
+      }>(`/admin/settings/${id}`),
     updateSettings: (id: string, config: any) =>
-      staffRequest(`/admin/settings/${id}`, { 
+      staffRequest<{ success: boolean }>(`/admin/settings/${id}`, { 
         method: "POST", 
         body: JSON.stringify({ config }) 
       }),

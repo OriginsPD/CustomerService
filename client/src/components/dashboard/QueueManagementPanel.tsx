@@ -75,10 +75,10 @@ export function QueueManagementPanel() {
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 md:px-6 py-4 border-b border-white/[0.06]">
           {/* Left: title + count */}
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-blue-400" />
+            <Users className="h-4 w-4 text-amber-400" />
             <h2 className="text-sm font-semibold text-foreground">Live Queue</h2>
             {!isLoading && (
-              <span className="ml-1 rounded-full bg-blue-500/20 px-2 py-0.5 text-[11px] font-medium text-blue-300">
+              <span className="ml-1 rounded-full bg-amber-600/20 px-2 py-0.5 text-[11px] font-medium text-blue-300">
                 {queue.length} waiting
               </span>
             )}
@@ -115,7 +115,7 @@ export function QueueManagementPanel() {
                 placeholder="Filter by name…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-6 w-32 rounded border border-white/10 bg-white/[0.04] px-2 text-[11px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500/40"
+                className="h-6 w-32 rounded border border-white/10 bg-white/[0.04] px-2 text-[11px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-600/40"
               />
             )}
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -172,7 +172,7 @@ export function QueueManagementPanel() {
                   const { row: urgencyRow, time: urgencyTime } = URGENCY_STYLE[urgency];
 
                   const rowClass = isNext
-                    ? "bg-blue-500/[0.06] border-l-2 border-l-blue-400/70"
+                    ? "bg-amber-600/[0.06] border-l-2 border-l-amber-400/70"
                     : urgencyRow;
 
                   return (
@@ -216,7 +216,7 @@ export function QueueManagementPanel() {
 
                         {/* Est. wait */}
                         <td className="px-4 py-3">
-                          <span className="text-xs font-semibold text-cyan-400 tabular-nums">
+                          <span className="text-xs font-semibold text-gold-400 tabular-nums">
                             {item.estimatedWaitMinutes === 0
                               ? "Next!"
                               : `~${item.estimatedWaitMinutes}m`}
@@ -241,7 +241,7 @@ export function QueueManagementPanel() {
                       {isNext && filteredQueue.length > 1 && (
                         <tr aria-hidden="true">
                           <td colSpan={6} className="p-0">
-                            <div className="h-px bg-gradient-to-r from-blue-500/30 via-cyan-500/20 to-transparent" />
+                            <div className="h-px bg-gradient-to-r from-amber-600/30 via-gold-500/20 to-transparent" />
                           </td>
                         </tr>
                       )}
@@ -263,3 +263,4 @@ export function QueueManagementPanel() {
     </>
   );
 }
+

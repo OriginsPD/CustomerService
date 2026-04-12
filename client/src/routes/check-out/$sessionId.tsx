@@ -60,8 +60,8 @@ function CheckOutPage() {
         </p>
 
         {recentChange && (
-          <div className="mt-4 flex items-start gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] px-4 py-3">
-            <Sparkles className="h-4 w-4 text-cyan-400 mt-0.5 shrink-0" />
+          <div className="mt-4 flex items-start gap-3 rounded-xl border border-gold-500/20 bg-gold-500/[0.06] px-4 py-3">
+            <Sparkles className="h-4 w-4 text-gold-400 mt-0.5 shrink-0" />
             <p className="text-sm text-cyan-200/80 leading-relaxed">
               Based on recent visitor feedback, we've updated our questions to better
               understand your experience.
@@ -74,3 +74,4 @@ function CheckOutPage() {
     </div>
   );
 }
+

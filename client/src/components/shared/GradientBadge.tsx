@@ -15,8 +15,8 @@ export function GradientBadge({
     <span
       className={cn(
         "inline-flex items-center justify-center font-semibold rounded-lg",
-        "bg-gradient-to-r from-blue-600 to-cyan-500 text-white",
-        "shadow-lg shadow-blue-500/25",
+        "bg-gradient-to-r from-amber-500 to-gold-500 text-white",
+        "shadow-lg shadow-amber-600/25",
         {
           "px-2 py-0.5 text-xs": size === "sm",
           "px-3 py-1 text-sm": size === "md",
@@ -29,3 +29,4 @@ export function GradientBadge({
     </span>
   );
 }
+

@@ -20,9 +20,9 @@ const typeConfig: Record<
   },
   info: {
     icon: Info,
-    color: "text-blue-400",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/20",
+    color: "text-amber-400",
+    bg: "bg-amber-600/10",
+    border: "border-amber-600/20",
   },
 };
 
@@ -32,7 +32,7 @@ export function InsightsPanel() {
   return (
     <div className="glass-card p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Lightbulb className="h-4 w-4 text-cyan-400" />
+        <Lightbulb className="h-4 w-4 text-gold-400" />
         <h3 className="text-sm font-semibold text-foreground">Operational Insights</h3>
         <span className="text-[10px] text-muted-foreground ml-auto">AI-generated</span>
       </div>
@@ -77,3 +77,4 @@ export function InsightsPanel() {
     </div>
   );
 }
+

@@ -93,10 +93,6 @@ function StaffDashboardLayout() {
     { label: "Analytics", to: "/staff/dashboard/analytics", icon: BarChart3 },
   ];
 
-  if (auth.isSuperAdmin()) {
-    navItems.push({ label: "Admin", to: "/staff/dashboard/admin", icon: ShieldCheck });
-  }
-
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
@@ -106,7 +102,7 @@ function StaffDashboardLayout() {
             <h1 className="text-3xl font-black gradient-text">
               Staff Dashboard
             </h1>
-            <span className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[11px] text-blue-300">
+            <span className="flex items-center gap-1 rounded-full border border-amber-600/30 bg-amber-600/10 px-2 py-0.5 text-[11px] text-blue-300">
               <ShieldCheck className="h-3 w-3" />
               {session?.username ?? "Staff"}
             </span>
@@ -206,3 +202,4 @@ function StaffDashboardLayout() {
     </div>
   );
 }
+

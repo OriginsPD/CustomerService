@@ -2,7 +2,7 @@ import { createMiddleware } from "hono/factory";
 import { verify } from "hono/jwt";
 import { JWT_SECRET } from "../routes/auth.js";
 
-type StaffPayload = {
+export type StaffPayload = {
   sub: string;
   username: string;
   role: "superadmin" | "admin" | "agent";

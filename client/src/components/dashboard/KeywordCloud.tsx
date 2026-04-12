@@ -4,14 +4,14 @@ import type { Keyword } from "@vcc/shared";
 
 const sentimentColors: Record<string, { text: string; bg: string; border: string }> = {
   positive: {
-    text: "text-cyan-400",
-    bg: "bg-cyan-500/10",
-    border: "border-cyan-500/30",
+    text: "text-gold-400",
+    bg: "bg-gold-500/10",
+    border: "border-gold-500/30",
   },
   neutral: {
-    text: "text-blue-400",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/30",
+    text: "text-amber-400",
+    bg: "bg-amber-600/10",
+    border: "border-amber-600/30",
   },
   negative: {
     text: "text-rose-400",
@@ -84,3 +84,4 @@ export function KeywordCloud({ data }: KeywordCloudProps) {
     </GlossCard>
   );
 }
+

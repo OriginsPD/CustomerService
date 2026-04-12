@@ -49,7 +49,7 @@ export function FeedbackSuccessDrawer({
         <SheetHeader>
           <div className="flex flex-col items-center gap-4 pt-4 pb-2">
             {/* Success icon */}
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 shadow-xl shadow-blue-500/30">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-gold-500 shadow-xl shadow-amber-600/30">
               <Heart className="h-8 w-8 text-white fill-white" />
             </div>
 
@@ -67,8 +67,8 @@ export function FeedbackSuccessDrawer({
           {/* Sentiment analysis result */}
           <div className="glass-card gloss-overlay p-4 flex items-center gap-4">
             <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", {
-              "bg-cyan-500/15": result.sentiment === "positive",
-              "bg-blue-500/15": result.sentiment === "neutral",
+              "bg-gold-500/15": result.sentiment === "positive",
+              "bg-amber-600/15": result.sentiment === "neutral",
               "bg-rose-500/15": result.sentiment === "negative",
             })}>
               <SentimentIcon className={cn("h-5 w-5", getSentimentColor(result.sentiment))} />
@@ -102,3 +102,4 @@ export function FeedbackSuccessDrawer({
     </Sheet>
   );
 }
+

@@ -5,13 +5,17 @@ import { nanoid } from "nanoid";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { db } from "../db/connection.js";
 import { staffs, systemSettings, sessions } from "../db/schema.js";
-import { staffAuth, roleAuth } from "../middleware/staffAuth.js";
+import { staffAuth, roleAuth, type StaffPayload } from "../middleware/staffAuth.js";
 import { hashPassword } from "./auth.js";
 import { logger } from "../lib/logger.js";
 import { runAnalysis } from "../services/scheduler.service.js";
 import { initQueueMap } from "../services/queue.service.js";
 
-export const adminRoutes = new Hono();
+export const adminRoutes = new Hono<{
+  Variables: {
+    staff: StaffPayload;
+  };
+}>();
 
 adminRoutes.use("*", staffAuth);
 
@@ -84,18 +88,9 @@ adminRoutes.get("/staff", roleAuth(["superadmin"]), async (c) => {
   return c.json(allStaff);
 });
 
-adminRoutes.post("/staff", roleAuth(["superadmin"]), async (c) => {
+adminRoutes.post("/staff", roleAuth(["superadmin"]), zValidator("json", createStaffSchema), async (c) => {
   try {
-    const body = await c.req.json();
-    const result = createStaffSchema.safeParse(body);
-    
-    if (!result.success) {
-      const errorMsg = result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ');
-      logger.warn(`[Admin] Staff creation validation failed: ${errorMsg}`, { body });
-      return c.json({ error: errorMsg }, 400);
-    }
-
-    const data = result.data;
+    const data = c.req.valid("json");
     const id = nanoid();
     await db.insert(staffs).values({
       id,
@@ -108,7 +103,7 @@ adminRoutes.post("/staff", roleAuth(["superadmin"]), async (c) => {
     return c.json({ success: true, id });
   } catch (err) {
     logger.error("[Admin] Staff creation failed", { error: (err as Error).message });
-    return c.json({ error: "Invalid request body" }, 400);
+    return c.json({ error: "Internal server error" }, 500);
   }
 });
 

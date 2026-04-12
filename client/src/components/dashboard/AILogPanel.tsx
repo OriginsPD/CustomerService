@@ -40,7 +40,7 @@ export function AILogPanel({ open, onClose }: AILogPanelProps) {
       <SheetContent side="right" className="w-full max-w-lg overflow-y-auto">
         <SheetHeader>
           <div className="flex items-center gap-2 pr-8">
-            <Brain className="h-5 w-5 text-cyan-400" />
+            <Brain className="h-5 w-5 text-gold-400" />
             <SheetTitle>AI Decision Log</SheetTitle>
           </div>
           <SheetDescription>
@@ -148,3 +148,4 @@ export function AILogPanel({ open, onClose }: AILogPanelProps) {
     </Sheet>
   );
 }
+

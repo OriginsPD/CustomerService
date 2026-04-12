@@ -109,7 +109,7 @@ function QueuePage() {
 
       {/* ── Your position card — shown while waiting in the queue ───────────── */}
       {myQueueItem && (
-        <GlossCard className="mb-6 flex items-center justify-between gap-4 py-4 border-blue-500/30">
+        <GlossCard className="mb-6 flex items-center justify-between gap-4 py-4 border-amber-600/30">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">
               Your spot
@@ -175,7 +175,7 @@ function QueuePage() {
       {/* ── Stats row ───────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <GlossCard className="py-4 flex items-center gap-3">
-          <Users className="h-5 w-5 text-blue-400" />
+          <Users className="h-5 w-5 text-amber-400" />
           <div>
             <p className="text-2xl font-black tabular-nums gradient-text">
               {isLoading ? "—" : queue.length}
@@ -184,7 +184,7 @@ function QueuePage() {
           </div>
         </GlossCard>
         <GlossCard className="py-4 flex items-center gap-3">
-          <Clock className="h-5 w-5 text-cyan-400" />
+          <Clock className="h-5 w-5 text-gold-400" />
           <div>
             <p className="text-2xl font-black tabular-nums gradient-text">
               {isLoading || queue.length === 0
@@ -195,7 +195,7 @@ function QueuePage() {
           </div>
         </GlossCard>
         <GlossCard className="py-4 flex items-center gap-3">
-          <RefreshCw className="h-4 w-4 text-blue-400" />
+          <RefreshCw className="h-4 w-4 text-amber-400" />
           <div>
             <p className="text-2xl font-black tabular-nums gradient-text">
               15s
@@ -284,7 +284,7 @@ function QueuePage() {
                       {formatRelativeTime(item.checkedInAt)}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="text-sm font-semibold text-cyan-400 tabular-nums">
+                      <span className="text-sm font-semibold text-gold-400 tabular-nums">
                         {item.estimatedWaitMinutes === 0
                           ? "Next!"
                           : `~${item.estimatedWaitMinutes}m`}
@@ -300,3 +300,4 @@ function QueuePage() {
     </div>
   );
 }
+

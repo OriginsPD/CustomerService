@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   UserPlus, 
   Trash2, 
@@ -9,10 +11,10 @@ import {
   User as UserIcon,
   Users,
   Loader2,
-  MoreVertical,
-  Pencil
+  Key,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { CreateStaffSchema, type CreateStaffForm } from "@vcc/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { GlossCard } from "@/components/shared/GlossCard";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedError } from "@/components/shared/AnimatedError";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -38,12 +41,20 @@ export function StaffManagementPanel() {
   const queryClient = useQueryClient();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [formData, setFormData] = useState({
-    username: "",
-    fullName: "",
-    password: "",
-    role: "agent" as "admin" | "agent",
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<CreateStaffForm>({
+    resolver: zodResolver(CreateStaffSchema),
+    defaultValues: { role: "agent" },
   });
+
+  const roleValue = watch("role");
 
   const { data: staffList, isLoading } = useQuery({
     queryKey: ["admin", "staff"],
@@ -51,11 +62,11 @@ export function StaffManagementPanel() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (body: typeof formData) => api.admin.createStaff(body),
+    mutationFn: (body: CreateStaffForm) => api.admin.createStaff(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "staff"] });
       setIsAddModalOpen(false);
-      setFormData({ username: "", fullName: "", password: "", role: "agent" });
+      reset();
       setErrorMessage("");
     },
     onError: (err: any) => {
@@ -74,15 +85,14 @@ export function StaffManagementPanel() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "staff"] }),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate(formData);
+  const onSubmit = (data: CreateStaffForm) => {
+    createMutation.mutate(data);
   };
 
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
       </div>
     );
   }
@@ -91,7 +101,7 @@ export function StaffManagementPanel() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold flex items-center gap-2">
-          <Users className="h-5 w-5 text-indigo-400" />
+          <Users className="h-5 w-5 text-amber-400" />
           System Staff ({staffList?.length ?? 0})
         </h2>
         
@@ -99,73 +109,97 @@ export function StaffManagementPanel() {
           setIsAddModalOpen(open);
           if (!open) {
             setErrorMessage("");
-            setFormData({ username: "", fullName: "", password: "", role: "agent" });
+            reset();
           }
         }}>
           <DialogTrigger asChild>
-            <Button className="gap-2 shadow-lg shadow-indigo-500/20">
+            <Button className="gap-2 shadow-lg shadow-amber-500/20 btn-gradient">
               <UserPlus className="h-4 w-4" /> Add Staff Member
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-black/90 backdrop-blur-xl border-white/10">
             <DialogHeader>
-              <DialogTitle>Create Staff Account</DialogTitle>
+              <DialogTitle className="text-xl font-black gradient-text">Create Staff Account</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4" noValidate>
               {errorMessage && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
+                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold animate-in shake-2">
                   {errorMessage}
                 </div>
               )}
+              
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input 
-                  id="fullName" 
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="Jane Doe"
-                  required 
-                />
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
+                <div className="relative group">
+                  <UserIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-amber-400 transition-colors" />
+                  <Input 
+                    {...register("fullName")}
+                    placeholder="Jane Doe"
+                    className={cn(
+                      "bg-white/5 border-white/10 pl-10 h-11 focus:ring-amber-500/20",
+                      errors.fullName && "border-rose-500/50"
+                    )}
+                  />
+                </div>
+                <AnimatedError message={errors.fullName?.message} />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input 
-                  id="username" 
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  placeholder="jdoe"
-                  required 
-                />
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Username</Label>
+                <div className="relative group">
+                  <span className="absolute left-3 top-3.5 text-xs font-bold text-muted-foreground group-focus-within:text-amber-400 transition-colors">@</span>
+                  <Input 
+                    {...register("username")}
+                    placeholder="jdoe"
+                    className={cn(
+                      "bg-white/5 border-white/10 pl-10 h-11 focus:ring-amber-500/20",
+                      errors.username && "border-rose-500/50"
+                    )}
+                  />
+                </div>
+                <AnimatedError message={errors.username?.message} />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••"
-                  required 
-                />
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Security Key</Label>
+                <div className="relative group">
+                  <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-amber-400 transition-colors" />
+                  <Input 
+                    {...register("password")}
+                    type="password"
+                    placeholder="••••••••"
+                    className={cn(
+                      "bg-white/5 border-white/10 pl-10 h-11 focus:ring-amber-500/20",
+                      errors.password && "border-rose-500/50"
+                    )}
+                  />
+                </div>
+                <AnimatedError message={errors.password?.message} />
               </div>
+
               <div className="space-y-2">
-                <Label>System Role</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">System Role</Label>
                 <Select 
-                  value={formData.role} 
-                  onValueChange={(val: any) => setFormData({ ...formData, role: val })}
+                  value={roleValue} 
+                  onValueChange={(val: any) => setValue("role", val, { shouldValidate: true })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={cn(
+                    "bg-white/5 border-white/10 h-11 focus:ring-amber-500/20",
+                    errors.role && "border-rose-500/50"
+                  )}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="agent">Agent (Queue Control)</SelectItem>
-                    <SelectItem value="admin">Admin (Analytics + Questions)</SelectItem>
+                  <SelectContent className="bg-stone-900 border-white/10">
+                    <SelectItem value="agent" className="focus:bg-amber-500/10 focus:text-amber-400">Agent (Queue Control)</SelectItem>
+                    <SelectItem value="admin" className="focus:bg-amber-500/10 focus:text-amber-400">Admin (Analytics + Questions)</SelectItem>
                   </SelectContent>
                 </Select>
+                <AnimatedError message={errors.role?.message} />
               </div>
-              <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+
+              <Button type="submit" className="w-full btn-gradient h-11 shadow-lg shadow-amber-500/20 mt-4" disabled={createMutation.isPending}>
                 {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Create Account
+                Initialize Account
               </Button>
             </form>
           </DialogContent>
@@ -174,10 +208,10 @@ export function StaffManagementPanel() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {staffList?.map((staff: any) => (
-          <GlossCard key={staff.id} className="relative group border-white/5 hover:border-indigo-500/30 transition-all duration-300">
+          <GlossCard key={staff.id} className="relative group border-white/5 hover:border-amber-500/30 transition-all duration-300">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform duration-300">
                   {staff.role === 'superadmin' ? <Shield className="h-6 w-6" /> : <UserIcon className="h-6 w-6" />}
                 </div>
                 <div>
@@ -186,7 +220,7 @@ export function StaffManagementPanel() {
                 </div>
               </div>
               <Badge variant={staff.isActive ? "outline" : "destructive"} className={cn(
-                "capitalize",
+                "capitalize text-[10px] font-bold tracking-widest",
                 staff.isActive && "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
               )}>
                 {staff.role}
@@ -209,7 +243,7 @@ export function StaffManagementPanel() {
                       size="icon" 
                       onClick={() => statusMutation.mutate({ id: staff.id, isActive: !staff.isActive })}
                       title={staff.isActive ? "Deactivate" : "Activate"}
-                      className="h-8 w-8 text-muted-foreground hover:text-white"
+                      className="h-8 w-8 text-muted-foreground hover:text-white hover:bg-white/5"
                     >
                       {staff.isActive ? <UserMinus className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                     </Button>

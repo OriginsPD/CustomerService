@@ -8,16 +8,16 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow",
+          "border-transparent bg-gradient-to-r from-amber-500 to-gold-500 text-white shadow",
         secondary: "border-white/10 bg-white/5 text-foreground/80",
         destructive: "border-transparent bg-destructive/20 text-rose-400",
         outline: "border-white/20 text-foreground/70",
-        positive: "border-transparent bg-cyan-500/20 text-cyan-400",
-        neutral: "border-transparent bg-blue-500/20 text-blue-400",
+        positive: "border-transparent bg-gold-500/20 text-gold-400",
+        neutral: "border-transparent bg-amber-600/20 text-amber-400",
         negative: "border-transparent bg-rose-500/20 text-rose-400",
         add: "border-transparent bg-emerald-500/20 text-emerald-400",
         remove: "border-transparent bg-rose-500/20 text-rose-400",
-        retain: "border-transparent bg-blue-500/20 text-blue-400",
+        retain: "border-transparent bg-amber-600/20 text-amber-400",
       },
     },
     defaultVariants: {
@@ -37,3 +37,4 @@ function Badge({ className, variant, ...props }: BadgeProps) {
 }
 
 export { Badge, badgeVariants };
+

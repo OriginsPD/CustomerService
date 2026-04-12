@@ -37,7 +37,7 @@ const NAV = {
   checkIn: { to: "/check-in", label: "Check-In", icon: UserCheck },
   queue: { to: "/queue", label: "Live Queue", icon: Users },
   dashboard: { to: "/staff/dashboard", label: "Dashboard", icon: BarChart3 },
-  admin: { to: "/staff/dashboard/admin", label: "Admin", icon: ShieldCheck },
+  admin: { to: "/staff/admin", label: "Admin", icon: ShieldCheck },
 } as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -84,9 +84,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col overflow-hidden">
       {/* ── Ambient Background Glows ────────────────────────────────────────── */}
       <div className="pointer-events-none fixed inset-0 flex justify-center z-[-1] overflow-hidden">
-        <div className="absolute -top-[10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-blue-600/10 mix-blend-screen blur-[120px]" />
-        <div className="absolute top-[20%] right-[-10%] h-[600px] w-[600px] rounded-full bg-cyan-500/10 mix-blend-screen blur-[120px]" />
-        <div className="absolute -bottom-[10%] left-[20%] h-[400px] w-[600px] rounded-full bg-indigo-500/10 mix-blend-screen blur-[120px]" />
+        <div className="absolute -top-[10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-amber-500/10 mix-blend-screen blur-[120px]" />
+        <div className="absolute top-[20%] right-[-10%] h-[600px] w-[600px] rounded-full bg-gold-500/10 mix-blend-screen blur-[120px]" />
+        <div className="absolute -bottom-[10%] left-[20%] h-[400px] w-[600px] rounded-full bg-amber-600/10 mix-blend-screen blur-[120px]" />
       </div>
 
       {/* ── Desktop Top Navigation (hidden below md) ────────────────────────── */}
@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-8">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-500/30">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-gold-500 shadow-lg shadow-amber-600/30">
               <Brain className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -116,11 +116,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 group hover-lift",
                     isActive
-                      ? "bg-gradient-to-r from-blue-600/20 to-cyan-500/10 text-foreground shadow-[inset_0_1px_rgba(255,255,255,0.1)] border border-white/5"
+                      ? "bg-gradient-to-r from-amber-500/20 to-gold-500/10 text-foreground shadow-[inset_0_1px_rgba(255,255,255,0.1)] border border-white/5"
                       : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
                   )}
                 >
-                  <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-cyan-400" : "group-hover:text-cyan-400")} />
+                  <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-gold-400" : "group-hover:text-gold-400")} />
                   {item.label}
                 </Link>
               );
@@ -132,8 +132,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-4">
           {role === "staff" && (
             <div className="flex items-center gap-3">
-              <div className="glass-card px-3 py-1.5 flex items-center gap-2 rounded-full border-blue-500/30">
-                <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
+              <div className="glass-card px-3 py-1.5 flex items-center gap-2 rounded-full border-amber-600/30">
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
                 <span className="text-xs font-semibold">{staffSession?.username ?? "Staff"}</span>
               </div>
               <button onClick={handleLogout} className="text-xs font-medium text-muted-foreground hover:text-rose-400 transition-colors flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-rose-500/10">
@@ -145,10 +145,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {role === "client" && (
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                <div className="h-2 w-2 rounded-full bg-gold-400 animate-pulse" />
                 <span className="text-xs text-muted-foreground">Session Active</span>
               </div>
-              <Link to="/check-out/$sessionId" params={{ sessionId: localStorage.getItem(MY_SESSION_KEY) ?? "" }} className="text-xs font-medium text-muted-foreground hover:text-cyan-400 transition-colors flex items-center gap-1.5">
+              <Link to="/check-out/$sessionId" params={{ sessionId: localStorage.getItem(MY_SESSION_KEY) ?? "" }} className="text-xs font-medium text-muted-foreground hover:text-gold-400 transition-colors flex items-center gap-1.5">
                 <QrCode className="h-3.5 w-3.5" /> Check Out
               </Link>
               {hasDayPass && (
@@ -170,7 +170,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                    <LogOut className="h-3.5 w-3.5" /> End Pass
                  </button>
                )}
-               <Link to="/staff/login" className="text-xs font-medium text-muted-foreground hover:text-blue-400 transition-colors flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-blue-500/10">
+               <Link to="/staff/login" className="text-xs font-medium text-muted-foreground hover:text-amber-400 transition-colors flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-amber-600/10">
                  <LogIn className="h-3.5 w-3.5" /> Staff Login
                </Link>
              </div>
@@ -181,7 +181,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* ── Mobile top header (hidden on md+) ─────────────────────────────── */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-500/30">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-gold-500 shadow-lg shadow-amber-600/30">
             <Brain className="h-4 w-4 text-white" />
           </div>
           <p className="text-sm font-bold gradient-text tracking-wide">VCC</p>
@@ -211,11 +211,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-150",
                     isActive
-                      ? "bg-gradient-to-r from-blue-600/20 to-cyan-500/10 text-foreground border border-white/5"
+                      ? "bg-gradient-to-r from-amber-500/20 to-gold-500/10 text-foreground border border-white/5"
                       : "text-muted-foreground hover:bg-white/5"
                   )}
                 >
-                  <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-cyan-400" : "")} />
+                  <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-gold-400" : "")} />
                   <span className="font-medium">{item.label}</span>
                 </Link>
               );
@@ -230,7 +230,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
             {role === "client" && (
               <>
-                <Link to="/check-out/$sessionId" params={{ sessionId: localStorage.getItem(MY_SESSION_KEY) ?? "" }} onClick={() => setDrawerOpen(false)} className="w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-cyan-400 bg-cyan-500/10 transition-colors">
+                <Link to="/check-out/$sessionId" params={{ sessionId: localStorage.getItem(MY_SESSION_KEY) ?? "" }} onClick={() => setDrawerOpen(false)} className="w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-gold-400 bg-gold-500/10 transition-colors">
                   <QrCode className="h-4 w-4" /> Check Out Feedback
                 </Link>
                 {hasDayPass && (
@@ -247,7 +247,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <LogOut className="h-4 w-4" /> End Day Pass
                   </button>
                 )}
-                <Link to="/staff/login" onClick={() => setDrawerOpen(false)} className="w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-blue-400 bg-blue-500/10 transition-colors">
+                <Link to="/staff/login" onClick={() => setDrawerOpen(false)} className="w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-amber-400 bg-amber-600/10 transition-colors">
                   <LogIn className="h-4 w-4" /> Staff Login
                 </Link>
               </>
@@ -265,3 +265,4 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+

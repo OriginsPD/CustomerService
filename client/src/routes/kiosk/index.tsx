@@ -18,8 +18,8 @@ function KioskPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-black relative overflow-hidden">
       {/* Background gradient blobs */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-cyan-500/8 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gold-500/8 rounded-full blur-3xl" />
       </div>
 
       {/* Localhost warning */}
@@ -49,7 +49,7 @@ function KioskPage() {
       <div className="relative z-10 flex flex-col items-center gap-8 px-6 text-center">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-xl shadow-blue-500/30">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-gold-500 shadow-xl shadow-amber-600/30">
             <Brain className="h-7 w-7 text-white" />
           </div>
           <div className="text-left">
@@ -71,7 +71,7 @@ function KioskPage() {
         {/* QR code */}
         <div className="relative">
           {/* Glow effect */}
-          <div className="absolute inset-0 rounded-3xl bg-blue-500/20 blur-2xl scale-110" />
+          <div className="absolute inset-0 rounded-3xl bg-amber-600/20 blur-2xl scale-110" />
           <div className="relative glass-card gloss-overlay p-8 rounded-3xl">
             <QRCodeSVG
               value={checkInUrl}
@@ -99,3 +99,4 @@ function KioskPage() {
     </div>
   );
 }
+

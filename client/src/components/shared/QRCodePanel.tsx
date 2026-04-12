@@ -58,9 +58,10 @@ export function QRCodePanel({ url, className }: QRCodePanelProps) {
 
       {/* Instruction */}
       <div className="flex items-center gap-2 text-muted-foreground">
-        <QrCode className="h-4 w-4 text-cyan-400" />
+        <QrCode className="h-4 w-4 text-gold-400" />
         <p className="text-xs">Clients scan this to check in</p>
       </div>
     </div>
   );
 }
+

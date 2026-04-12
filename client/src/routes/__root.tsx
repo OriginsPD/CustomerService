@@ -21,9 +21,9 @@ function RootLayout() {
         theme="dark"
         toastOptions={{
           style: {
-            background: "rgba(13,27,42,0.95)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            color: "#f0f4ff",
+            background: "rgba(28, 25, 23, 0.95)",
+            border: "1px solid rgba(245, 158, 11, 0.15)",
+            color: "#fffbeb",
           },
         }}
       />

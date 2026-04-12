@@ -11,7 +11,7 @@ export function GlossCard({ children, className, glow }: GlossCardProps) {
     <div
       className={cn(
         "glass-card gloss-overlay p-6",
-        glow && "glow-blue",
+        glow && "glow-amber",
         className
       )}
     >
@@ -19,3 +19,4 @@ export function GlossCard({ children, className, glow }: GlossCardProps) {
     </div>
   );
 }
+

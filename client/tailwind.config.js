@@ -10,14 +10,18 @@ export default {
     },
     extend: {
       colors: {
-        // VCC brand palette
+        // VCC Amber brand palette
         vcc: {
-          black: "#0a0a0a",
-          navy: "#0d1b2a",
-          blue: "#3b82f6",
-          cyan: "#06b6d4",
-          surface: "rgba(255,255,255,0.04)",
-          border: "rgba(255,255,255,0.08)",
+          black: "#0c0a09",
+          stone: "#1c1917",
+          amber: "#f59e0b",
+          gold: "#fbbf24",
+          surface: "rgba(245,158,11,0.04)",
+          border: "rgba(245,158,11,0.08)",
+        },
+        gold: {
+          400: "#fcd34d",
+          500: "#fbbf24",
         },
         // ShadCN CSS variable aliases
         border: "hsl(var(--border))",
@@ -65,8 +69,8 @@ export default {
           to: { height: "0" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 8px 2px rgba(59,130,246,0.4)" },
-          "50%": { boxShadow: "0 0 20px 6px rgba(6,182,212,0.6)" },
+          "0%, 100%": { boxShadow: "0 0 8px 2px rgba(245,158,11,0.4)" },
+          "50%": { boxShadow: "0 0 20px 6px rgba(251,191,36,0.6)" },
         },
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
@@ -80,9 +84,9 @@ export default {
         shimmer: "shimmer 2s linear infinite",
       },
       backgroundImage: {
-        "vcc-gradient": "linear-gradient(135deg, #0a0a0a 0%, #0d1b2a 100%)",
-        "blue-cyan": "linear-gradient(90deg, #3b82f6, #06b6d4)",
-        "blue-cyan-135": "linear-gradient(135deg, #3b82f6, #06b6d4)",
+        "vcc-gradient": "linear-gradient(135deg, #0c0a09 0%, #1c1917 100%)",
+        "amber-gold": "linear-gradient(90deg, #f59e0b, #fbbf24)",
+        "amber-gold-135": "linear-gradient(135deg, #f59e0b, #fbbf24)",
       },
     },
   },

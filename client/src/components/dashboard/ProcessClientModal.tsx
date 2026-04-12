@@ -64,7 +64,7 @@ export function ProcessClientModal({
           /* ── Success state: show checkout link ──────────────────────────── */
           <div className="flex flex-col gap-5">
             <div className="flex flex-col items-center gap-3 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-600/30 to-cyan-500/30 border border-emerald-500/30">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-600/30 to-gold-500/30 border border-emerald-500/30">
                 <CheckCircle2 className="h-7 w-7 text-emerald-400" />
               </div>
               <div>
@@ -83,7 +83,7 @@ export function ProcessClientModal({
                 Feedback link for client
               </p>
               <div className="flex items-center gap-2">
-                <p className="flex-1 truncate text-xs text-cyan-400 font-mono">
+                <p className="flex-1 truncate text-xs text-gold-400 font-mono">
                   {checkoutUrl}
                 </p>
                 <Button
@@ -121,8 +121,8 @@ export function ProcessClientModal({
           <>
             <DialogHeader>
               <div className="flex items-center justify-center mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-600/20 to-cyan-500/20 border border-blue-500/30">
-                  <UserCheck className="h-6 w-6 text-blue-400" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-gold-500/20 border border-amber-600/30">
+                  <UserCheck className="h-6 w-6 text-amber-400" />
                 </div>
               </div>
               <DialogTitle className="text-center">Mark as Processed?</DialogTitle>
@@ -179,3 +179,4 @@ export function ProcessClientModal({
     </Dialog>
   );
 }
+

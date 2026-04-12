@@ -35,7 +35,7 @@ export function DynamicQuestions({
     <div className="flex flex-col gap-5">
       {/* Section header */}
       <div className="flex items-center gap-2">
-        <Brain className="h-4 w-4 text-cyan-400" />
+        <Brain className="h-4 w-4 text-gold-400" />
         <span className="text-sm font-semibold text-foreground">
           A few more questions
         </span>
@@ -84,7 +84,7 @@ export function DynamicQuestions({
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <span>Low</span>
-                          <span className="text-cyan-400 font-semibold tabular-nums">
+                          <span className="text-gold-400 font-semibold tabular-nums">
                             {numVal} / 10
                           </span>
                           <span>High</span>
@@ -116,3 +116,4 @@ export function DynamicQuestions({
     </div>
   );
 }
+

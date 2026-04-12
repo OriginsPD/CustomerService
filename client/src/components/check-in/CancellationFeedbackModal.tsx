@@ -83,8 +83,8 @@ export function CancellationFeedbackModal({
         {done ? (
           /* ── Success state ──────────────────────────────────────────────── */
           <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600/30 to-cyan-500/30 border border-cyan-500/30">
-              <CheckCircle2 className="h-7 w-7 text-cyan-400" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/30 to-gold-500/30 border border-gold-500/30">
+              <CheckCircle2 className="h-7 w-7 text-gold-400" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-foreground mb-1">
@@ -125,7 +125,7 @@ export function CancellationFeedbackModal({
               <div className="flex flex-col gap-2">
                 <Label>
                   What's the main reason for cancelling?{" "}
-                  <span className="text-cyan-400">*</span>
+                  <span className="text-gold-400">*</span>
                 </Label>
                 <Controller
                   name="reason"
@@ -140,7 +140,7 @@ export function CancellationFeedbackModal({
                           className={[
                             "text-left rounded-lg border px-3 py-2.5 text-sm transition-all",
                             field.value === r
-                              ? "border-blue-500/60 bg-blue-500/10 text-foreground"
+                              ? "border-amber-600/60 bg-amber-600/10 text-foreground"
                               : "border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
                           ].join(" ")}
                         >
@@ -168,7 +168,7 @@ export function CancellationFeedbackModal({
                         type="radio"
                         {...register("wouldReschedule")}
                         value={val}
-                        className="accent-blue-500"
+                        className="accent-amber-600"
                       />
                       <span className="text-sm text-muted-foreground capitalize">
                         {val === "yes" ? "Yes, I'll reschedule" : "No, not at this time"}
@@ -185,7 +185,7 @@ export function CancellationFeedbackModal({
                   {...register("additionalComment")}
                   rows={2}
                   placeholder="Anything else you'd like us to know…"
-                  className="w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+                  className="w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-amber-600/50"
                 />
               </div>
 
@@ -227,3 +227,4 @@ export function CancellationFeedbackModal({
     </Dialog>
   );
 }
+

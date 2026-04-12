@@ -24,6 +24,7 @@
     "@vcc/shared": "*",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
     "hono": "^4.5.0",
     "lucide-react": "^0.424.0",
     "qrcode.react": "^4.2.0",

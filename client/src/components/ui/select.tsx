@@ -15,7 +15,7 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "flex h-10 w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground backdrop-blur-sm",
-      "focus:border-blue-500/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
+      "focus:border-amber-600/60 focus:outline-none focus:ring-2 focus:ring-amber-600/20",
       "disabled:cursor-not-allowed disabled:opacity-50",
       "[&>span]:line-clamp-1",
       className
@@ -122,7 +122,7 @@ const SelectItem = React.forwardRef<
   >
     <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4 text-cyan-400" />
+        <Check className="h-4 w-4 text-gold-400" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -154,3 +154,4 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 };
+

@@ -64,12 +64,12 @@ export function QuestionManagementPanel() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-cyan-400" />
+          <MessageSquare className="h-4 w-4 text-gold-400" />
           <h2 className="text-sm font-semibold text-foreground">
             Feedback Questions
           </h2>
           {!isLoading && (
-            <span className="ml-1 rounded-full bg-cyan-500/20 px-2 py-0.5 text-[11px] font-medium text-cyan-300">
+            <span className="ml-1 rounded-full bg-gold-500/20 px-2 py-0.5 text-[11px] font-medium text-cyan-300">
               {questions.length} / 5 active
             </span>
           )}
@@ -95,9 +95,9 @@ export function QuestionManagementPanel() {
             >
               <div className="flex items-start gap-3 min-w-0">
                 {q.source === "ai_generated" ? (
-                  <Bot className="h-3.5 w-3.5 mt-0.5 shrink-0 text-cyan-400" />
+                  <Bot className="h-3.5 w-3.5 mt-0.5 shrink-0 text-gold-400" />
                 ) : (
-                  <Hand className="h-3.5 w-3.5 mt-0.5 shrink-0 text-blue-400" />
+                  <Hand className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-400" />
                 )}
                 <div className="min-w-0">
                   <p className="text-sm text-foreground leading-snug">{q.text}</p>
@@ -191,3 +191,4 @@ export function QuestionManagementPanel() {
     </GlossCard>
   );
 }
+

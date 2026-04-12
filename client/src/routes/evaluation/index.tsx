@@ -51,7 +51,7 @@ function EvaluationPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-gold-500 shadow-lg">
             <FlaskConical className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -59,13 +59,13 @@ function EvaluationPage() {
             <p className="text-sm text-muted-foreground">Phase 4 · PoC Deliverable · March 2026</p>
           </div>
         </div>
-        <div className="h-px bg-gradient-to-r from-blue-600/50 to-transparent mt-4" />
+        <div className="h-px bg-gradient-to-r from-amber-500/50 to-transparent mt-4" />
       </div>
 
       {/* Decision Banner */}
-      <GlossCard className="mb-6 border border-blue-500/20 bg-blue-500/[0.04]">
+      <GlossCard className="mb-6 border border-amber-600/20 bg-amber-600/[0.04]">
         <div className="flex items-start gap-3">
-          <CheckCircle2 className="h-5 w-5 text-cyan-400 mt-0.5 shrink-0" />
+          <CheckCircle2 className="h-5 w-5 text-gold-400 mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-semibold text-foreground mb-1">
               Selected Framework: <span className="gradient-text">Opencode SDK</span>
@@ -108,7 +108,7 @@ function EvaluationPage() {
                 >
                   <td className="px-4 py-3 font-medium text-foreground/80">{row.criteria}</td>
                   <td className={`px-4 py-3 text-center ${scoreColor(row.nanobot)}`}>{row.nanobot}</td>
-                  <td className={`px-4 py-3 text-center font-semibold bg-blue-500/[0.04] ${scoreColor(row.opencode)}`}>
+                  <td className={`px-4 py-3 text-center font-semibold bg-amber-600/[0.04] ${scoreColor(row.opencode)}`}>
                     {row.opencode}
                   </td>
                   <td className={`px-4 py-3 text-center ${scoreColor(row.crewai)}`}>{row.crewai}</td>
@@ -166,7 +166,7 @@ function EvaluationPage() {
                 "Code generation capabilities open the door to AI-assisted form design in future iterations",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <Minus className="h-3.5 w-3.5 text-cyan-400 mt-0.5 shrink-0" />
+                  <Minus className="h-3.5 w-3.5 text-gold-400 mt-0.5 shrink-0" />
                   {item}
                 </li>
               ))}
@@ -187,3 +187,4 @@ function EvaluationPage() {
     </div>
   );
 }
+

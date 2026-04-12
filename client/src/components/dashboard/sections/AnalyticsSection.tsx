@@ -34,7 +34,7 @@ export function AnalyticsSection() {
 
           {summary.lastAiRunAt && (
             <div className="flex items-center gap-2 mb-6 text-xs text-muted-foreground">
-              <Brain className="h-3 w-3 text-cyan-400" />
+              <Brain className="h-3 w-3 text-gold-400" />
               Last AI analysis:{" "}
               {new Date(summary.lastAiRunAt).toLocaleString()}
               <span className="text-muted-foreground/40">·</span>
@@ -71,3 +71,4 @@ export function AnalyticsSection() {
     </section>
   );
 }
+

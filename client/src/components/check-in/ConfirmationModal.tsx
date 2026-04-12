@@ -47,7 +47,7 @@ export function ConfirmationModal({ data, open, onClose }: ConfirmationModalProp
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="flex items-center justify-center mb-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-500/30">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-gold-500 shadow-lg shadow-amber-600/30">
                 <CheckCircle2 className="h-7 w-7 text-white" />
               </div>
             </div>
@@ -120,3 +120,4 @@ export function ConfirmationModal({ data, open, onClose }: ConfirmationModalProp
     </>
   );
 }
+

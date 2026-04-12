@@ -50,9 +50,9 @@ function StaffQueuePage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-blue-400" />
+            <UserCheck className="h-5 w-5 text-amber-400" />
             Waiting Queue
-            <Badge variant="secondary" className="ml-2 bg-blue-500/10 text-blue-400 border-blue-500/20">
+            <Badge variant="secondary" className="ml-2 bg-amber-600/10 text-amber-400 border-amber-600/20">
               {queue.length}
             </Badge>
           </h2>
@@ -94,7 +94,7 @@ function StaffQueuePage() {
                 <Button 
                   onClick={() => callUpMutation.mutate(item.sessionId)}
                   disabled={callUpMutation.isPending}
-                  className="btn-gradient shrink-0 shadow-lg shadow-blue-500/20"
+                  className="btn-gradient shrink-0 shadow-lg shadow-amber-600/20"
                   size="sm"
                 >
                   <Bell className="h-4 w-4 mr-1.5" />
@@ -165,3 +165,4 @@ function StaffQueuePage() {
     </div>
   );
 }
+

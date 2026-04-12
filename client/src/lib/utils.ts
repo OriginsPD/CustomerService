@@ -36,8 +36,8 @@ export function getSentimentColor(
   sentiment: "positive" | "neutral" | "negative"
 ): string {
   return {
-    positive: "text-cyan-400",
-    neutral: "text-blue-400",
+    positive: "text-gold-400",
+    neutral: "text-amber-400",
     negative: "text-rose-400",
   }[sentiment];
 }
@@ -49,6 +49,7 @@ export function getActionColor(
   return {
     add_question: "text-emerald-400",
     remove_question: "text-rose-400",
-    retain: "text-blue-400",
+    retain: "text-amber-400",
   }[action];
 }
+

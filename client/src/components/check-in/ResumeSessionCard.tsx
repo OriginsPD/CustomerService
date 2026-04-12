@@ -45,8 +45,8 @@ export function ResumeSessionCard({
         <div className="glass-card gloss-overlay p-6 rounded-2xl space-y-4">
           {/* Title */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600/30 to-cyan-500/20 border border-blue-500/20">
-              <CheckCircle2 className="h-5 w-5 text-cyan-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/30 to-gold-500/20 border border-amber-600/20">
+              <CheckCircle2 className="h-5 w-5 text-gold-400" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground leading-tight">
@@ -63,7 +63,7 @@ export function ResumeSessionCard({
           {/* Purpose pill */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Purpose:</span>
-            <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-300">
+            <span className="inline-flex items-center rounded-full border border-amber-600/20 bg-amber-600/10 px-2.5 py-0.5 text-xs font-medium text-blue-300">
               {session.purpose}
             </span>
           </div>
@@ -78,7 +78,7 @@ export function ResumeSessionCard({
           {/* Action buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-1">
             <Button
-              className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold shadow-lg shadow-blue-500/20"
+              className="flex-1 bg-gradient-to-r from-amber-500 to-gold-500 hover:from-amber-600 hover:to-gold-400 text-white font-semibold shadow-lg shadow-amber-600/20"
               onClick={() => navigate({ to: "/queue" })}
             >
               View Live Queue
@@ -95,7 +95,7 @@ export function ResumeSessionCard({
                 })
               }
             >
-              <MessageSquare className="mr-2 h-4 w-4 text-cyan-400" />
+              <MessageSquare className="mr-2 h-4 w-4 text-gold-400" />
               Submit Feedback
             </Button>
           </div>
@@ -134,3 +134,4 @@ export function ResumeSessionCard({
     </>
   );
 }
+

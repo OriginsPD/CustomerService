@@ -1,21 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { MessageSquareText, Save, Loader2, Key, Phone, UserCircle } from "lucide-react";
 import { api } from "@/lib/api";
+import { TwilioConfigSchema, type TwilioConfig } from "@vcc/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GlossCard } from "@/components/shared/GlossCard";
+import { AnimatedError } from "@/components/shared/AnimatedError";
 import { cn } from "@/lib/utils";
 
 export function TwilioSettingsPanel() {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({
-    accountSid: "",
-    authToken: "",
-    phoneNumber: "",
-  });
   const [success, setSuccess] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<TwilioConfig>({
+    resolver: zodResolver(TwilioConfigSchema),
+  });
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["admin", "settings", "twilio_config"],
@@ -24,16 +32,12 @@ export function TwilioSettingsPanel() {
 
   useEffect(() => {
     if (settings?.config) {
-      setFormData({
-        accountSid: settings.config.accountSid || "",
-        authToken: settings.config.authToken || "",
-        phoneNumber: settings.config.phoneNumber || "",
-      });
+      reset(settings.config);
     }
-  }, [settings]);
+  }, [settings, reset]);
 
   const mutation = useMutation({
-    mutationFn: (config: typeof formData) => 
+    mutationFn: (config: TwilioConfig) => 
       api.admin.updateSettings("twilio_config", config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "settings", "twilio_config"] });
@@ -42,15 +46,14 @@ export function TwilioSettingsPanel() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    mutation.mutate(formData);
+  const onSubmit = (data: TwilioConfig) => {
+    mutation.mutate(data);
   };
 
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
       </div>
     );
   }
@@ -58,99 +61,104 @@ export function TwilioSettingsPanel() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-          <MessageSquareText className="h-5 w-5 text-indigo-400" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-lg shadow-amber-500/10">
+          <MessageSquareText className="h-5 w-5 text-amber-400" />
         </div>
         <div>
-          <h2 className="text-xl font-bold">Twilio SMS Engine</h2>
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+          <h2 className="text-xl font-black gradient-text">Twilio SMS Engine</h2>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
             Communication Infrastructure
           </p>
         </div>
       </div>
 
-      <GlossCard className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+      <GlossCard className="p-8 border-white/5 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-500 to-gold-500 opacity-20" />
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+          <div className="space-y-5">
             {/* Account SID */}
             <div className="space-y-2">
-              <Label htmlFor="accountSid" className="flex items-center gap-2">
-                <UserCircle className="h-4 w-4 text-muted-foreground" />
-                Account SID
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                <UserCircle className="h-3 w-3" /> Account SID
               </Label>
               <Input
-                id="accountSid"
-                value={formData.accountSid}
-                onChange={(e) => setFormData({ ...formData, accountSid: e.target.value })}
+                {...register("accountSid")}
                 placeholder="ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                className="bg-black/20 font-mono text-sm"
+                className={cn(
+                  "bg-white/5 border-white/10 font-mono text-sm h-11 focus:ring-amber-500/20",
+                  errors.accountSid && "border-rose-500/50"
+                )}
               />
+              <AnimatedError message={errors.accountSid?.message} />
             </div>
 
             {/* Auth Token */}
             <div className="space-y-2">
-              <Label htmlFor="authToken" className="flex items-center gap-2">
-                <Key className="h-4 w-4 text-muted-foreground" />
-                Auth Token
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                <Key className="h-3 w-3" /> Auth Token
               </Label>
               <Input
-                id="authToken"
+                {...register("authToken")}
                 type="password"
-                value={formData.authToken}
-                onChange={(e) => setFormData({ ...formData, authToken: e.target.value })}
                 placeholder="••••••••••••••••••••••••••••••••"
-                className="bg-black/20 font-mono text-sm"
+                className={cn(
+                  "bg-white/5 border-white/10 font-mono text-sm h-11 focus:ring-amber-500/20",
+                  errors.authToken && "border-rose-500/50"
+                )}
               />
+              <AnimatedError message={errors.authToken?.message} />
             </div>
 
             {/* Phone Number */}
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber" className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                Twilio Phone Number
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                <Phone className="h-3 w-3" /> Twilio Phone Number
               </Label>
               <Input
-                id="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                {...register("phoneNumber")}
                 placeholder="+18885550000"
-                className="bg-black/20 font-mono text-sm"
+                className={cn(
+                  "bg-white/5 border-white/10 font-mono text-sm h-11 focus:ring-amber-500/20",
+                  errors.phoneNumber && "border-rose-500/50"
+                )}
               />
-              <p className="text-[10px] text-muted-foreground italic">
-                Ensure the number includes the country code (e.g., +1)
+              <AnimatedError message={errors.phoneNumber?.message} />
+              <p className="text-[10px] text-muted-foreground/60 italic ml-1">
+                E.164 format strictly required for global routing
               </p>
             </div>
           </div>
 
-          <div className="pt-4 flex items-center justify-between">
-            <div className="text-xs text-muted-foreground">
+          <div className="pt-6 flex items-center justify-between border-t border-white/5">
+            <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-tight">
               {settings?.updatedAt && (
-                <span>Last updated: {new Date(settings.updatedAt).toLocaleString()}</span>
+                <span>Revision: {new Date(settings.updatedAt).toLocaleDateString()} {new Date(settings.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
               )}
             </div>
             
             <Button 
               type="submit" 
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || isSubmitting}
               className={cn(
-                "min-w-[140px] transition-all duration-300",
-                success ? "bg-emerald-600 hover:bg-emerald-600" : "bg-indigo-600 hover:bg-indigo-700"
+                "min-w-[160px] h-11 font-bold shadow-lg transition-all duration-500",
+                success ? "bg-emerald-600 hover:bg-emerald-600 shadow-emerald-500/20" : "btn-gradient shadow-amber-500/20"
               )}
             >
               {mutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Saving...
+                  Syncing...
                 </>
               ) : success ? (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Saved!
+                  Config Synced
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Save Settings
+                  Save Configuration
                 </>
               )}
             </Button>
@@ -158,12 +166,14 @@ export function TwilioSettingsPanel() {
         </form>
       </GlossCard>
 
-      {/* Info Card */}
-      <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm text-blue-400">
-        <p className="font-bold mb-1">💡 Important Note</p>
-        <p className="text-xs opacity-80 leading-relaxed">
-          The server will prioritize these UI-managed settings over any values found in the .env file. 
-          Updating these settings will take effect for the next SMS dispatch.
+      {/* Security Warning */}
+      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 text-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <p className="font-black uppercase tracking-widest text-[10px] text-amber-400">Security Protocol</p>
+        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Sensitive credentials are encrypted at rest. Updating these parameters will immediately override environment variables for all subsequent outbound SMS traffic.
         </p>
       </div>
     </div>

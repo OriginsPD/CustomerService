@@ -10,7 +10,7 @@ interface MetricCardProps {
   iconColor?: string;
 }
 
-function MetricCard({ icon: Icon, label, value, sub, iconColor = "text-blue-400" }: MetricCardProps) {
+function MetricCard({ icon: Icon, label, value, sub, iconColor = "text-amber-400" }: MetricCardProps) {
   return (
     <GlossCard className="flex items-center gap-4">
       <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/[0.06]">
@@ -43,7 +43,7 @@ export function OperationalMetrics({ data }: OperationalMetricsProps) {
         label="Visits Today"
         value={data.totalVisitsToday}
         sub={`${data.totalVisitsAllTime} all time`}
-        iconColor="text-blue-400"
+        iconColor="text-amber-400"
       />
       <MetricCard
         icon={Star}
@@ -54,22 +54,23 @@ export function OperationalMetrics({ data }: OperationalMetricsProps) {
             : "—"
         }
         sub={`${data.avgRating.toFixed(1)} ★ all time`}
-        iconColor="text-cyan-400"
+        iconColor="text-gold-400"
       />
       <MetricCard
         icon={Activity}
         label="Queue Depth"
         value={data.currentQueueDepth}
         sub="clients waiting now"
-        iconColor="text-blue-400"
+        iconColor="text-amber-400"
       />
       <MetricCard
         icon={ThumbsUp}
         label="Positive Sentiment"
         value={`${data.positiveSentimentPct}%`}
         sub={`${data.sentimentDistribution.total} rated`}
-        iconColor="text-cyan-400"
+        iconColor="text-gold-400"
       />
     </div>
   );
 }
+
