@@ -2,11 +2,23 @@ import { createMiddleware } from "hono/factory";
 import { verify } from "hono/jwt";
 import { JWT_SECRET } from "../routes/auth.js";
 
+type StaffPayload = {
+  sub: string;
+  username: string;
+  role: "superadmin" | "admin" | "agent";
+  fullName: string;
+  exp: number;
+};
+
 /**
  * JWT middleware — protects staff-only mutation endpoints.
- * Expects:  Authorization: Bearer <token>
+ * Extracts user info and stores it in context.
  */
-export const staffAuth = createMiddleware(async (c, next) => {
+export const staffAuth = createMiddleware<{
+  Variables: {
+    staff: StaffPayload;
+  };
+}>(async (c, next) => {
   const authHeader = c.req.header("Authorization");
 
   if (!authHeader?.startsWith("Bearer ")) {
@@ -16,11 +28,33 @@ export const staffAuth = createMiddleware(async (c, next) => {
   const token = authHeader.slice(7);
 
   try {
-    // hono/jwt v4.x requires the algorithm to be specified explicitly.
-    // HS256 matches the algorithm used in auth.ts sign().
-    await verify(token, JWT_SECRET, "HS256");
+    const payload = (await verify(token, JWT_SECRET, "HS256")) as StaffPayload;
+    
+    // Check if staff is still valid in context if needed, but for now just pass payload
+    c.set("staff", payload);
+    
     await next();
-  } catch {
+  } catch (err) {
     return c.json({ error: "Unauthorized — invalid or expired token" }, 401);
   }
 });
+
+/**
+ * Higher-order middleware to restrict routes by role.
+ * Must be used AFTER staffAuth.
+ */
+export const roleAuth = (allowedRoles: Array<"superadmin" | "admin" | "agent">) => {
+  return createMiddleware<{
+    Variables: {
+      staff: StaffPayload;
+    };
+  }>(async (c, next) => {
+    const staff = c.get("staff");
+    
+    if (!staff || !allowedRoles.includes(staff.role)) {
+      return c.json({ error: "Forbidden — insufficient permissions" }, 403);
+    }
+    
+    await next();
+  });
+};

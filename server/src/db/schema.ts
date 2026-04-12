@@ -28,6 +28,7 @@ export const sentimentEnum = pgEnum("sentiment_type", [
 ]);
 
 export const staffRoleEnum = pgEnum("staff_role", [
+  "superadmin",
   "admin",
   "agent",
 ]);
@@ -67,6 +68,7 @@ export const sessions = pgTable(
       .notNull()
       .defaultNow(),
     checkedOutAt: timestamp("checked_out_at", { withTimezone: true }),
+    processedBy: text("processed_by").references(() => staffs.id),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => ({
@@ -77,6 +79,7 @@ export const sessions = pgTable(
       t.queueNumber
     ),
     dateIdx: index("sessions_date_idx").on(t.checkedInAt),
+    processedByIdx: index("sessions_processed_by_idx").on(t.processedBy),
   })
 );
 
@@ -205,10 +208,27 @@ export const staffs = pgTable(
   {
     id: text("id").primaryKey(),
     username: text("username").notNull().unique(),
+    fullName: text("full_name").notNull(),
     passwordHash: text("password_hash").notNull(),
     role: staffRoleEnum("role").notNull().default("agent"),
+    isActive: boolean("is_active").notNull().default(true),
+    lastLogin: timestamp("last_login", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  }
+);
+
+// ── System Settings ─────────────────────────────────────────────────────────
+
+export const systemSettings = pgTable(
+  "system_settings",
+  {
+    id: text("id").primaryKey(),
+    config: jsonb("config").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedBy: text("updated_by").references(() => staffs.id),
   }
 );
 
@@ -218,6 +238,10 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   feedback: one(feedback, {
     fields: [sessions.id],
     references: [feedback.sessionId],
+  }),
+  processor: one(staffs, {
+    fields: [sessions.processedBy],
+    references: [staffs.id],
   }),
 }));
 
@@ -258,6 +282,18 @@ export const aiDecisionLogRelations = relations(aiDecisionLog, ({ one }) => ({
   }),
 }));
 
+export const staffsRelations = relations(staffs, ({ many }) => ({
+  processedSessions: many(sessions),
+  updatedSettings: many(systemSettings),
+}));
+
+export const systemSettingsRelations = relations(systemSettings, ({ one }) => ({
+  updater: one(staffs, {
+    fields: [systemSettings.updatedBy],
+    references: [staffs.id],
+  }),
+}));
+
 // ── Type exports ──────────────────────────────────────────────────────────────
 
 export type Session = typeof sessions.$inferSelect;
@@ -274,3 +310,5 @@ export type CancellationFeedback = typeof cancellationFeedback.$inferSelect;
 export type NewCancellationFeedback = typeof cancellationFeedback.$inferInsert;
 export type Staff = typeof staffs.$inferSelect;
 export type NewStaff = typeof staffs.$inferInsert;
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type NewSystemSetting = typeof systemSettings.$inferInsert;

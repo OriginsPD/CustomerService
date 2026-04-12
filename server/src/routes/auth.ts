@@ -44,39 +44,53 @@ export const authRoutes = new Hono().post(
     try {
       const { username, password } = c.req.valid("json");
 
-      // Pre-flight check: Seed a default database admin if the staffs table is completely empty.
+      // Pre-flight check: Seed a default superadmin if the staffs table is completely empty.
       const result = await db.select({ count: sql<number>`count(*)` }).from(staffs);
       if (Number(result[0].count) === 0) {
         await db.insert(staffs).values({
           id: nanoid(),
           username: "admin",
+          fullName: "System SuperAdmin",
           passwordHash: hashPassword(env.STAFF_PASSWORD),
-          role: "admin",
+          role: "superadmin",
         });
-        logger.info("[Auth] Auto-seeded default admin staff identity.");
+        logger.info("[Auth] Auto-seeded default superadmin staff identity.");
       }
 
       const staffMember = await db.query.staffs.findFirst({
-        where: and(eq(staffs.username, username), isNull(staffs.deletedAt)),
+        where: and(
+          eq(staffs.username, username), 
+          eq(staffs.isActive, true),
+          isNull(staffs.deletedAt)
+        ),
       });
 
       if (!staffMember || !verifyPassword(password, staffMember.passwordHash)) {
         return c.json({ error: "Invalid credentials" }, 401);
       }
 
+      // Update last login
+      await db.update(staffs)
+        .set({ lastLogin: new Date() })
+        .where(eq(staffs.id, staffMember.id));
+
       const token = await sign(
         {
           sub: staffMember.id,
           username: staffMember.username,
           role: staffMember.role,
+          fullName: staffMember.fullName,
           exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
         },
-        JWT_SECRET
+        JWT_SECRET,
+        "HS256"
       );
 
       return c.json({ 
         token, 
         username: staffMember.username, 
+        role: staffMember.role,
+        fullName: staffMember.fullName,
         expiresIn: TOKEN_TTL_SECONDS 
       });
     } catch (e) {

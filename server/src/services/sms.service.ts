@@ -1,15 +1,34 @@
 import twilio from "twilio";
 import { logger } from "../lib/logger.js";
 import { env } from "../env.js";
+import { db } from "../db/connection.js";
+import { systemSettings } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 
-const accountSid = env.TWILIO_ACCOUNT_SID;
-const authToken = env.TWILIO_AUTH_TOKEN;
-const twilioNumber = env.TWILIO_PHONE_NUMBER;
+interface TwilioConfig {
+  accountSid?: string;
+  authToken?: string;
+  phoneNumber?: string;
+}
 
-const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
+/**
+ * Fetches the active Twilio configuration, prioritizing 
+ * database-managed settings over environment variables.
+ */
+async function getTwilioConfig() {
+  const dbConfig = await db.query.systemSettings.findFirst({
+    where: eq(systemSettings.id, "twilio_config"),
+  });
 
-// Debug initialization
-console.log(`[SMS Service] Twilio Client initialized: ${!!client}. Number: ${!!twilioNumber}`);
+  const config = (dbConfig?.config as TwilioConfig) || {};
+
+  return {
+    accountSid: config.accountSid || env.TWILIO_ACCOUNT_SID,
+    authToken: config.authToken || env.TWILIO_AUTH_TOKEN,
+    twilioNumber: config.phoneNumber || env.TWILIO_PHONE_NUMBER,
+    isFromDb: !!dbConfig,
+  };
+}
 
 /**
  * Normalizes a phone number to E.164 format.
@@ -39,21 +58,22 @@ function normalizePhoneNumber(phone: string): string {
 }
 
 export async function sendQueueSms(phone: string, queuePosition: number, sessionId: string) {
-  console.log(`[SMS Service] sendQueueSms called for ${phone}, Position: ${queuePosition}`);
+  const { accountSid, authToken, twilioNumber, isFromDb } = await getTwilioConfig();
   const normalizedPhone = normalizePhoneNumber(phone);
-  logger.info(`[SMS Service] Preparing SMS to ${normalizedPhone} (original: ${phone}). Position: ${queuePosition}.`);
-  if (!client || !twilioNumber) {
-    logger.warn("[SMS Service] Twilio credentials missing from environment. SMS was simulated but not dispatched.", {
-      hasClient: !!client,
-      hasNumber: !!twilioNumber,
-      accountSid: accountSid ? "PRESENT" : "MISSING",
-      twilioNumber: twilioNumber ? "PRESENT" : "MISSING"
+
+  logger.info(`[SMS Service] Preparing SMS to ${normalizedPhone} (original: ${phone}). Source: ${isFromDb ? "Database" : "Environment"}`);
+
+  if (!accountSid || !authToken || !twilioNumber) {
+    logger.warn("[SMS Service] Twilio credentials missing from both DB and Environment. SMS skipped.", {
+      hasAccountSid: !!accountSid,
+      hasAuthToken: !!authToken,
+      hasTwilioNumber: !!twilioNumber,
     });
     return;
   }
 
   try {
-    // PUBLIC_URL should point to the domain where the kiosk is hosted (or localhost in dev)
+    const client = twilio(accountSid, authToken);
     const baseUrl = env.PUBLIC_URL;
     const appUrl = `${baseUrl}/queue`; 
     

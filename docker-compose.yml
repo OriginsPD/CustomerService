@@ -27,6 +27,7 @@ services:
     volumes:
       - ./server/src:/app/server/src
       - ./server/drizzle.config.ts:/app/server/drizzle.config.ts
+      - ./server/drizzle:/app/server/drizzle
       - ./packages/shared/src:/app/packages/shared/src
       # Mount root .env so server picks up credential changes
       - ./.env:/app/.env
@@ -88,6 +89,7 @@ services:
     volumes:
       - ./server/src:/app/server/src
       - ./server/drizzle.config.ts:/app/server/drizzle.config.ts
+      - ./server/drizzle:/app/server/drizzle
       - ./.env:/app/.env
       - server_nm:/app/node_modules
     command: ["npm", "-w", "@vcc/server", "run", "db:studio"]

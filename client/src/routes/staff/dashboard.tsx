@@ -93,6 +93,10 @@ function StaffDashboardLayout() {
     { label: "Analytics", to: "/staff/dashboard/analytics", icon: BarChart3 },
   ];
 
+  if (auth.isSuperAdmin()) {
+    navItems.push({ label: "Admin", to: "/staff/dashboard/admin", icon: ShieldCheck });
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* ── Header ─────────────────────────────────────────────────────────── */}

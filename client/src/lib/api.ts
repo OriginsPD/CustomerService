@@ -33,15 +33,7 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
-/** Like request(), but attaches the staff JWT as a Bearer token.
- *
- * On 401 the stale token is cleared from localStorage so that
- * auth.isAuthenticated() returns false, which causes TanStack Router's
- * beforeLoad guard on /staff/dashboard to redirect to /staff/login on
- * the next navigation.  We do NOT force an immediate page redirect here
- * because that would log the staff member out mid-session even if the 401
- * was transient.  The mutation's onError handler shows a toast instead.
- */
+/** Like request(), but attaches the staff JWT as a Bearer token. */
 async function staffRequest<T>(
   path: string,
   options?: RequestInit
@@ -57,8 +49,6 @@ async function staffRequest<T>(
     });
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
-      // Clear the stale / expired token so the next navigation triggers
-      // the beforeLoad guard and redirects to /staff/login.
       auth.logout();
     }
     throw err;
@@ -69,7 +59,13 @@ export const api = {
   // Staff authentication
   auth: {
     login: (username: string, password: string) =>
-      request<{ token: string; username: string; expiresIn: number }>(
+      request<{ 
+        token: string; 
+        username: string; 
+        role: "superadmin" | "admin" | "agent";
+        fullName: string;
+        expiresIn: number 
+      }>(
         "/auth/login",
         { method: "POST", body: JSON.stringify({ username, password }) }
       ),
@@ -148,5 +144,24 @@ export const api = {
       staffRequest("/admin/run-analysis", { method: "POST" }),
     completeSession: (sessionId: string) =>
       staffRequest(`/admin/sessions/${sessionId}/complete`, { method: "PATCH" }),
+    
+    // SuperAdmin Staff Management
+    listStaff: () =>
+      staffRequest("/admin/staff"),
+    createStaff: (body: any) =>
+      staffRequest("/admin/staff", { method: "POST", body: JSON.stringify(body) }),
+    updateStaff: (id: string, body: any) =>
+      staffRequest(`/admin/staff/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    deleteStaff: (id: string) =>
+      staffRequest(`/admin/staff/${id}`, { method: "DELETE" }),
+      
+    // SuperAdmin Settings Management
+    getSettings: (id: string) =>
+      staffRequest(`/admin/settings/${id}`),
+    updateSettings: (id: string, config: any) =>
+      staffRequest(`/admin/settings/${id}`, { 
+        method: "POST", 
+        body: JSON.stringify({ config }) 
+      }),
   },
 };

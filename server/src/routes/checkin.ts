@@ -14,6 +14,7 @@ import {
 } from "../services/queue.service.js";
 import { rateLimiter } from "../middleware/rateLimiter.js";
 import { sendQueueSms } from "../services/sms.service.js";
+import { logger } from "../lib/logger.js";
 
 export const checkinRoutes = new Hono()
 

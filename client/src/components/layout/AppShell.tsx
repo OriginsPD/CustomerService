@@ -37,6 +37,7 @@ const NAV = {
   checkIn: { to: "/check-in", label: "Check-In", icon: UserCheck },
   queue: { to: "/queue", label: "Live Queue", icon: Users },
   dashboard: { to: "/staff/dashboard", label: "Dashboard", icon: BarChart3 },
+  admin: { to: "/staff/dashboard/admin", label: "Admin", icon: ShieldCheck },
 } as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -54,7 +55,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const navItems =
     role === "staff"
-      ? [NAV.dashboard]
+      ? auth.isSuperAdmin() 
+        ? [NAV.dashboard, NAV.admin]
+        : [NAV.dashboard]
       : role === "client"
         ? [NAV.queue]
         : [NAV.checkIn];

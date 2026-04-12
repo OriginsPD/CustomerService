@@ -41,7 +41,7 @@ function StaffLoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       const result = await api.auth.login(data.username, data.password);
-      auth.setSession(result.token, result.username);
+      auth.setSession(result.token, result.username, result.role, result.fullName);
       navigate({ to: "/staff/dashboard" });
     } catch {
       setAuthError("Invalid credentials — check username and password");

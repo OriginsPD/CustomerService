@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as QueueIndexRouteImport } from './routes/queue/index'
@@ -23,16 +24,16 @@ import { Route as StaffDashboardIndexRouteImport } from './routes/staff/dashboar
 import { Route as StaffDashboardQueueRouteImport } from './routes/staff/dashboard/queue'
 import { Route as StaffDashboardQuestionsRouteImport } from './routes/staff/dashboard/questions'
 import { Route as StaffDashboardAnalyticsRouteImport } from './routes/staff/dashboard/analytics'
-import { Route as ScanRouteImport } from './routes/scan'
+import { Route as StaffDashboardAdminRouteImport } from './routes/staff/dashboard/admin'
 
-const SplatRoute = SplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -100,6 +101,11 @@ const StaffDashboardAnalyticsRoute = StaffDashboardAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => StaffDashboardRoute,
 } as any)
+const StaffDashboardAdminRoute = StaffDashboardAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => StaffDashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/evaluation/': typeof EvaluationIndexRoute
   '/kiosk/': typeof KioskIndexRoute
   '/queue/': typeof QueueIndexRoute
+  '/staff/dashboard/admin': typeof StaffDashboardAdminRoute
   '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
   '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
   '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/evaluation': typeof EvaluationIndexRoute
   '/kiosk': typeof KioskIndexRoute
   '/queue': typeof QueueIndexRoute
+  '/staff/dashboard/admin': typeof StaffDashboardAdminRoute
   '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
   '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
   '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/evaluation/': typeof EvaluationIndexRoute
   '/kiosk/': typeof KioskIndexRoute
   '/queue/': typeof QueueIndexRoute
+  '/staff/dashboard/admin': typeof StaffDashboardAdminRoute
   '/staff/dashboard/analytics': typeof StaffDashboardAnalyticsRoute
   '/staff/dashboard/questions': typeof StaffDashboardQuestionsRoute
   '/staff/dashboard/queue': typeof StaffDashboardQueueRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/evaluation/'
     | '/kiosk/'
     | '/queue/'
+    | '/staff/dashboard/admin'
     | '/staff/dashboard/analytics'
     | '/staff/dashboard/questions'
     | '/staff/dashboard/queue'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/evaluation'
     | '/kiosk'
     | '/queue'
+    | '/staff/dashboard/admin'
     | '/staff/dashboard/analytics'
     | '/staff/dashboard/questions'
     | '/staff/dashboard/queue'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/evaluation/'
     | '/kiosk/'
     | '/queue/'
+    | '/staff/dashboard/admin'
     | '/staff/dashboard/analytics'
     | '/staff/dashboard/questions'
     | '/staff/dashboard/queue'
@@ -221,18 +233,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/$': {
-      id: '/$'
-      path: '/$'
-      fullPath: '/$'
-      preLoaderRoute: typeof SplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/scan': {
       id: '/scan'
       path: '/scan'
       fullPath: '/scan'
       preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -326,10 +338,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffDashboardAnalyticsRouteImport
       parentRoute: typeof StaffDashboardRoute
     }
+    '/staff/dashboard/admin': {
+      id: '/staff/dashboard/admin'
+      path: '/admin'
+      fullPath: '/staff/dashboard/admin'
+      preLoaderRoute: typeof StaffDashboardAdminRouteImport
+      parentRoute: typeof StaffDashboardRoute
+    }
   }
 }
 
 interface StaffDashboardRouteChildren {
+  StaffDashboardAdminRoute: typeof StaffDashboardAdminRoute
   StaffDashboardAnalyticsRoute: typeof StaffDashboardAnalyticsRoute
   StaffDashboardQuestionsRoute: typeof StaffDashboardQuestionsRoute
   StaffDashboardQueueRoute: typeof StaffDashboardQueueRoute
@@ -337,6 +357,7 @@ interface StaffDashboardRouteChildren {
 }
 
 const StaffDashboardRouteChildren: StaffDashboardRouteChildren = {
+  StaffDashboardAdminRoute: StaffDashboardAdminRoute,
   StaffDashboardAnalyticsRoute: StaffDashboardAnalyticsRoute,
   StaffDashboardQuestionsRoute: StaffDashboardQuestionsRoute,
   StaffDashboardQueueRoute: StaffDashboardQueueRoute,

@@ -7,18 +7,27 @@
 const TOKEN_KEY = "vcc_staff_token";
 const SESSION_KEY = "vcc_staff_session";
 
+export type StaffRole = "superadmin" | "admin" | "agent";
+
 interface StaffSession {
   username: string;
+  fullName: string;
+  role: StaffRole;
   loginAt: string;
 }
 
 export const auth = {
   /** Persist token + session after a successful server login */
-  setSession(token: string, username: string): void {
+  setSession(token: string, username: string, role: StaffRole, fullName: string): void {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(
       SESSION_KEY,
-      JSON.stringify({ username, loginAt: new Date().toISOString() } satisfies StaffSession)
+      JSON.stringify({ 
+        username, 
+        role, 
+        fullName, 
+        loginAt: new Date().toISOString() 
+      } satisfies StaffSession)
     );
   },
 
@@ -30,15 +39,13 @@ export const auth = {
   isAuthenticated(): boolean {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return false;
-    // Decode the JWT payload (base64url) and verify the exp claim client-side.
-    // This prevents stale tokens from being used after the 8-hour TTL expires,
-    // so staff are redirected to /staff/login instead of hitting a 401 mid-session.
+    
     try {
       const payloadB64 = token.split(".")[1];
       if (!payloadB64) return false;
       const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
+      
       if (typeof payload.exp === "number" && payload.exp < Math.floor(Date.now() / 1000)) {
-        // Token is expired — clear storage proactively
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(SESSION_KEY);
         return false;
@@ -47,6 +54,11 @@ export const auth = {
     } catch {
       return false;
     }
+  },
+
+  isSuperAdmin(): boolean {
+    const session = this.getSession();
+    return session?.role === "superadmin";
   },
 
   getToken(): string | null {
