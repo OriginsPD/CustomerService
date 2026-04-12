@@ -1,17 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # VCC — Development Docker Compose
-#
-# Features:
-#   • Bind-mounts src/ directories so code changes reload instantly
-#   • node_modules live inside the container (anonymous volumes) so the
-#     host folder never shadows the container's installed packages
-#   • Shared package (packages/shared) is mounted into both services
-#
-# Usage:
-#   docker compose up --build          # first run
-#   docker compose up                  # subsequent runs
-#   docker compose down -v             # stop + remove volumes
-#
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -21,27 +9,28 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.server
-      target: dev                         # uses tsx watch HMR
+      target: dev
     container_name: vcc-server
     restart: unless-stopped
     env_file:
-      - .env                              # DATABASE_URL, OPENCODE_API_KEY, PORT
+      - .env
     environment:
       PORT: "3001"
       CLIENT_URL: "http://localhost:5173"
+      PUBLIC_URL: "http://localhost:5173"
       NODE_ENV: development
-      OPENCODE_API_KEY: ${OPENCODE_API_KEY:-}
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
+      # Polling fix for Windows/WSL
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
     ports:
-      - "3001:3001"                       # expose for direct API testing
+      - "3001:3001"
     volumes:
-      # ── Source bind-mounts (changes reflect immediately) ──
       - ./server/src:/app/server/src
       - ./server/drizzle.config.ts:/app/server/drizzle.config.ts
       - ./packages/shared/src:/app/packages/shared/src
-      # ── Keep node_modules inside the container ──
+      # Mount root .env so server picks up credential changes
+      - ./.env:/app/.env
+      - ./logs:/app/logs
       - server_nm:/app/node_modules
       - server_dist:/app/server/dist
     networks:
@@ -58,27 +47,25 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.client
-      target: dev                         # uses Vite HMR dev server
+      target: dev
     container_name: vcc-client
     restart: unless-stopped
     environment:
-      VITE_API_TARGET: "http://server:3001"   # proxy → server container
+      VITE_API_TARGET: "http://server:3001"
       NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
     ports:
-      - "5173:5173"                       # browser connects here
+      - "5173:5173"
     volumes:
-      # ── Source bind-mounts ──
       - ./client/src:/app/client/src
       - ./client/public:/app/client/public
       - ./client/index.html:/app/client/index.html
       - ./client/tailwind.config.js:/app/client/tailwind.config.js
       - ./client/postcss.config.js:/app/client/postcss.config.js
       - ./client/vite.config.ts:/app/client/vite.config.ts
-      # tsconfig files needed by the TanStack Router plugin for path-alias resolution
       - ./client/tsconfig.json:/app/client/tsconfig.json
       - ./client/tsconfig.node.json:/app/client/tsconfig.node.json
       - ./packages/shared/src:/app/packages/shared/src
-      # ── Keep node_modules inside the container ──
       - client_nm:/app/node_modules
       - client_src_nm:/app/client/node_modules
     networks:
@@ -87,14 +74,35 @@ services:
       server:
         condition: service_healthy
 
-# ── Named volumes ─────────────────────────────────────────────────────────────
-volumes:
-  server_nm:       # server node_modules (never overwritten by host)
-  server_dist:     # compiled server output
-  client_nm:       # root node_modules
-  client_src_nm:   # client-level node_modules
+  # ── Drizzle Studio ────────────────────────────────────────────────────────────
+  db-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+      target: dev
+    container_name: vcc-db-studio
+    env_file:
+      - .env
+    ports:
+      - "4983:4983"
+    volumes:
+      - ./server/src:/app/server/src
+      - ./server/drizzle.config.ts:/app/server/drizzle.config.ts
+      - ./.env:/app/.env
+      - server_nm:/app/node_modules
+    command: ["npm", "-w", "@vcc/server", "run", "db:studio"]
+    networks:
+      - vcc-net
+    depends_on:
+      server:
+        condition: service_healthy
 
-# ── Network ───────────────────────────────────────────────────────────────────
+volumes:
+  server_nm:
+  server_dist:
+  client_nm:
+  client_src_nm:
+
 networks:
   vcc-net:
     driver: bridge

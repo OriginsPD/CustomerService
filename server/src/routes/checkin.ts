@@ -48,7 +48,12 @@ export const checkinRoutes = new Hono()
 
     // Phase 3: External Hooks (Dispatch SMS asynchronously)
     if (body.phone) {
-      sendQueueSms(body.phone, queuePosition, sessionId).catch(() => {});
+      sendQueueSms(body.phone, queuePosition, sessionId).catch((err) => {
+        logger.error("[CheckIn] Critical error in SMS dispatch hook", {
+          error: err instanceof Error ? err.message : String(err),
+          sessionId,
+        });
+      });
     }
 
     return c.json({

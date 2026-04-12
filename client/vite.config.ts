@@ -42,6 +42,10 @@ export default defineConfig({
       host: DEV_HOST,
       clientPort: 5173,
     },
+    // Fix HMR in Docker (especially on Windows/WSL)
+    watch: {
+      usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
+    },
     proxy: {
       "/api": {
         target: API_TARGET,

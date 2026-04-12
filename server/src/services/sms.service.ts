@@ -8,6 +8,9 @@ const twilioNumber = env.TWILIO_PHONE_NUMBER;
 
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
+// Debug initialization
+console.log(`[SMS Service] Twilio Client initialized: ${!!client}. Number: ${!!twilioNumber}`);
+
 /**
  * Normalizes a phone number to E.164 format.
  * Currently assumes a default of +1 if no country code is provided.
@@ -15,7 +18,7 @@ const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 function normalizePhoneNumber(phone: string): string {
   // Remove all non-numeric characters
   const cleaned = phone.replace(/\D/g, "");
-  
+
   // If it already starts with +, just return it (after cleaning other chars)
   if (phone.startsWith("+")) {
     return `+${cleaned}`;
@@ -36,9 +39,9 @@ function normalizePhoneNumber(phone: string): string {
 }
 
 export async function sendQueueSms(phone: string, queuePosition: number, sessionId: string) {
+  console.log(`[SMS Service] sendQueueSms called for ${phone}, Position: ${queuePosition}`);
   const normalizedPhone = normalizePhoneNumber(phone);
   logger.info(`[SMS Service] Preparing SMS to ${normalizedPhone} (original: ${phone}). Position: ${queuePosition}.`);
-
   if (!client || !twilioNumber) {
     logger.warn("[SMS Service] Twilio credentials missing from environment. SMS was simulated but not dispatched.", {
       hasClient: !!client,

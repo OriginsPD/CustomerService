@@ -16,7 +16,6 @@ import { env } from "../env.js";
 // ── Opencode client (lazy singleton) ──────────────────────────────────────────
 
 let _opencode: import("@opencode-ai/sdk").OpencodeClient | null = null;
-let _opencodeServer: { close: () => void; url: string } | null = null;
 
 async function getClient(): Promise<import("@opencode-ai/sdk").OpencodeClient | null> {
   if (_opencode) return _opencode;
@@ -25,11 +24,17 @@ async function getClient(): Promise<import("@opencode-ai/sdk").OpencodeClient | 
     return null;
   }
   try {
-    const { createOpencode } = await import("@opencode-ai/sdk");
-    const instance = await createOpencode();
-    _opencode = instance.client;
-    _opencodeServer = instance.server;
-    logger.info("[AI] Opencode client initialised successfully.");
+    const { createOpencodeClient } = await import("@opencode-ai/sdk");
+    
+    // Initialize cloud client directly bypassing local server spawn
+    _opencode = createOpencodeClient({
+      baseUrl: "https://opencode.ai/zen/v1",
+      headers: {
+        Authorization: `Bearer ${env.OPENCODE_API_KEY}`,
+      },
+    });
+    
+    logger.info("[AI] Opencode cloud client initialised successfully.");
     return _opencode;
   } catch (err) {
     logger.error("[AI] Failed to load @opencode-ai/sdk", { error: (err as Error).message });
