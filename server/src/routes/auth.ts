@@ -2,12 +2,33 @@ import { Hono } from "hono";
 import { sign } from "hono/jwt";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import { scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
+import { db } from "../db/connection.js";
+import { staffs } from "../db/schema.js";
+import { eq, isNull, and } from "drizzle-orm";
+import { logger } from "../lib/logger.js";
 
 export const JWT_SECRET =
   process.env.JWT_SECRET ?? "vcc-dev-secret-change-in-production";
 
-const STAFF_USERNAME = process.env.STAFF_USERNAME ?? "admin";
-const STAFF_PASSWORD = process.env.STAFF_PASSWORD ?? "vcc2024";
+// ── Native PBKDF2 cryptography ───────────────────────────────────────────────
+export function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const derivedKey = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${derivedKey}`;
+}
+
+export function verifyPassword(password: string, hash: string): boolean {
+  try {
+    const [salt, key] = hash.split(":");
+    if (!salt || !key) return false;
+    const keyBuffer = Buffer.from(key, "hex");
+    const derivedKey = scryptSync(password, salt, 64);
+    return timingSafeEqual(keyBuffer, derivedKey);
+  } catch {
+    return false;
+  }
+}
 
 // Token valid for 8 hours
 const TOKEN_TTL_SECONDS = 8 * 60 * 60;
@@ -21,19 +42,39 @@ export const authRoutes = new Hono().post(
   async (c) => {
     const { username, password } = c.req.valid("json");
 
-    if (username !== STAFF_USERNAME || password !== STAFF_PASSWORD) {
+    // Pre-flight check: Seed a default database admin if the staffs table is completely empty.
+    const [{ count }] = await db.execute<{ count: number }>(`SELECT COUNT(*) FROM staffs`);
+    if (Number(count) === 0) {
+      await db.insert(staffs).values({
+        username: "admin",
+        passwordHash: hashPassword(process.env.STAFF_PASSWORD ?? "vcc2024"),
+        role: "admin",
+      });
+      logger.info("[Auth] Auto-seeded default admin staff identity.");
+    }
+
+    const staffMember = await db.query.staffs.findFirst({
+      where: and(eq(staffs.username, username), isNull(staffs.deletedAt)),
+    });
+
+    if (!staffMember || !verifyPassword(password, staffMember.passwordHash)) {
       return c.json({ error: "Invalid credentials" }, 401);
     }
 
     const token = await sign(
       {
-        sub: username,
-        role: "staff",
+        sub: staffMember.id,
+        username: staffMember.username,
+        role: staffMember.role,
         exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
       },
       JWT_SECRET
     );
 
-    return c.json({ token, username, expiresIn: TOKEN_TTL_SECONDS });
+    return c.json({ 
+      token, 
+      username: staffMember.username, 
+      expiresIn: TOKEN_TTL_SECONDS 
+    });
   }
 );

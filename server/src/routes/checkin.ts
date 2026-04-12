@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { nanoid } from "nanoid";
 import { db } from "../db/connection.js";
 import { sessions, cancellationFeedback } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { CheckInFormSchema } from "@vcc/shared";
 import {
   registerSession,
@@ -12,11 +12,13 @@ import {
   getQueuePosition,
   getEstimatedWaitMinutes,
 } from "../services/queue.service.js";
+import { rateLimiter } from "../middleware/rateLimiter.js";
+import { sendQueueSms } from "../services/sms.service.js";
 
 export const checkinRoutes = new Hono()
 
-  // POST /api/checkin — Register a new client
-  .post("/", zValidator("json", CheckInFormSchema, (result, c) => {
+  // POST /api/checkin — Register a new client (Limit 5 per minute per IP)
+  .post("/", rateLimiter(5, 60000), zValidator("json", CheckInFormSchema, (result, c) => {
     if (!result.success) {
       const message = result.error.issues.map((i) => i.message).join("; ");
       return c.json({ error: `Validation failed: ${message}` }, 400);
@@ -44,6 +46,11 @@ export const checkinRoutes = new Hono()
     const queuePosition = getQueuePosition(sessionId) ?? 1;
     const estimatedWaitMinutes = getEstimatedWaitMinutes(sessionId);
 
+    // Phase 3: External Hooks (Dispatch SMS asynchronously)
+    if (body.phone) {
+      sendQueueSms(body.phone, queuePosition, sessionId).catch(() => {});
+    }
+
     return c.json({
       sessionId,
       queueNumber,
@@ -60,7 +67,7 @@ export const checkinRoutes = new Hono()
     const id = c.req.param("id");
 
     const session = await db.query.sessions.findFirst({
-      where: eq(sessions.id, id),
+      where: and(eq(sessions.id, id), isNull(sessions.deletedAt)),
     });
 
     if (!session) {
@@ -91,7 +98,7 @@ export const checkinRoutes = new Hono()
     }
 
     const session = await db.query.sessions.findFirst({
-      where: eq(sessions.id, id),
+      where: and(eq(sessions.id, id), isNull(sessions.deletedAt)),
     });
 
     if (!session) {
@@ -115,7 +122,7 @@ export const checkinRoutes = new Hono()
       await tx
         .update(sessions)
         .set({ status: "cancelled" })
-        .where(eq(sessions.id, id));
+        .where(and(eq(sessions.id, id), isNull(sessions.deletedAt)));
     });
 
     deregisterSession(id);
@@ -136,7 +143,7 @@ export const checkinRoutes = new Hono()
     await db
       .update(sessions)
       .set({ status: status as "waiting" | "in_progress" | "completed" | "cancelled" })
-      .where(eq(sessions.id, id));
+      .where(and(eq(sessions.id, id), isNull(sessions.deletedAt)));
 
     // Keep the in-memory queue map consistent when a session is cancelled
     if (status === "cancelled") {

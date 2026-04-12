@@ -3,16 +3,17 @@ import { zValidator } from "@hono/zod-validator";
 import { nanoid } from "nanoid";
 import { db } from "../db/connection.js";
 import { feedback, feedbackAnswers, sessions } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { CheckOutFormSchema } from "@vcc/shared";
 import { analyzeSentiment } from "../services/ai.service.js";
 import { deregisterSession } from "../services/queue.service.js";
 import { logger } from "../lib/logger.js";
+import { rateLimiter } from "../middleware/rateLimiter.js";
 
 export const checkoutRoutes = new Hono()
 
-  // POST /api/checkout — Submit feedback
-  .post("/", zValidator("json", CheckOutFormSchema, (result, c) => {
+  // POST /api/checkout — Submit feedback (max 3 per minute per IP)
+  .post("/", rateLimiter(3, 60000), zValidator("json", CheckOutFormSchema, (result, c) => {
     if (!result.success) {
       const message = result.error.issues.map((i) => i.message).join("; ");
       logger.warn("[Checkout] Validation failed", { issues: result.error.issues });
@@ -40,7 +41,7 @@ export const checkoutRoutes = new Hono()
     try {
       await db.transaction(async (tx) => {
         const session = await tx.query.sessions.findFirst({
-          where: eq(sessions.id, body.sessionId),
+          where: and(eq(sessions.id, body.sessionId), isNull(sessions.deletedAt)),
         });
 
         if (!session) {
@@ -51,7 +52,7 @@ export const checkoutRoutes = new Hono()
         }
 
         const existingFeedback = await tx.query.feedback.findFirst({
-          where: eq(feedback.sessionId, body.sessionId),
+          where: and(eq(feedback.sessionId, body.sessionId), isNull(feedback.deletedAt)),
         });
         if (existingFeedback) {
           throw Object.assign(new Error("Feedback already submitted for this session"), { statusCode: 409 });
@@ -80,7 +81,7 @@ export const checkoutRoutes = new Hono()
         await tx
           .update(sessions)
           .set({ status: "completed", checkedOutAt: new Date() })
-          .where(eq(sessions.id, body.sessionId));
+          .where(and(eq(sessions.id, body.sessionId), isNull(sessions.deletedAt)));
       });
     } catch (err: any) {
       const code: number = err?.statusCode ?? 0;
@@ -107,7 +108,7 @@ export const checkoutRoutes = new Hono()
     const sessionId = c.req.param("sessionId");
 
     const result = await db.query.feedback.findFirst({
-      where: eq(feedback.sessionId, sessionId),
+      where: and(eq(feedback.sessionId, sessionId), isNull(feedback.deletedAt)),
       with: { answers: { with: { question: true } } },
     });
 

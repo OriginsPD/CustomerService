@@ -30,7 +30,7 @@ services:
       PORT: "3001"
       CLIENT_URL: "http://localhost:5173"
       NODE_ENV: development
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENCODE_API_KEY: ${OPENCODE_API_KEY:-}
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -39,6 +39,7 @@ services:
     volumes:
       # ── Source bind-mounts (changes reflect immediately) ──
       - ./server/src:/app/server/src
+      - ./server/drizzle.config.ts:/app/server/drizzle.config.ts
       - ./packages/shared/src:/app/packages/shared/src
       # ── Keep node_modules inside the container ──
       - server_nm:/app/node_modules

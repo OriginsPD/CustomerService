@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth, MY_SESSION_KEY, DAY_SESSION_KEY } from "@/lib/auth";
+import { useQueueStream } from "@/hooks/useQueueStream";
 import {
   Sheet,
   SheetContent,
@@ -36,7 +37,6 @@ const NAV = {
   checkIn: { to: "/check-in", label: "Check-In", icon: UserCheck },
   queue: { to: "/queue", label: "Live Queue", icon: Users },
   dashboard: { to: "/staff/dashboard", label: "Dashboard", icon: BarChart3 },
-  evaluation: { to: "/evaluation", label: "Evaluation", icon: FlaskConical },
 } as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -45,16 +45,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const currentPath = routerState.location.pathname;
   const [drawerOpen, setDrawerOpen] = useState(false);
   
+  // Connect explicitly to the server's SSE emitter
+  useQueueStream();
+  
   const role = useRole();
   const staffSession = auth.getSession();
   const hasDayPass = !!localStorage.getItem(DAY_SESSION_KEY);
 
   const navItems =
     role === "staff"
-      ? [NAV.dashboard, NAV.evaluation]
+      ? [NAV.dashboard]
       : role === "client"
-        ? [NAV.queue, NAV.evaluation]
-        : [NAV.checkIn, NAV.evaluation];
+        ? [NAV.queue]
+        : [NAV.checkIn];
 
   const handleLogout = () => {
     auth.logout();

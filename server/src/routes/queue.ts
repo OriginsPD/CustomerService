@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { db } from "../db/connection.js";
 import { sessions } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import {
   getQueuePosition,
   getOrderedQueue,
@@ -23,7 +23,7 @@ export const queueRoutes = new Hono()
 
     // Fetch session details for all waiting sessions (one query)
     const sessionDetails = await db.query.sessions.findMany({
-      where: eq(sessions.status, "waiting"),
+      where: and(eq(sessions.status, "waiting"), isNull(sessions.deletedAt)),
     });
 
     // O(1) Map lookup per session
@@ -70,7 +70,7 @@ export const queueRoutes = new Hono()
   // GET /api/queue/in-progress — List of clients currently being processed
   .get("/in-progress", staffAuth, async (c) => {
     const inProgress = await db.query.sessions.findMany({
-      where: eq(sessions.status, "in_progress"),
+      where: and(eq(sessions.status, "in_progress"), isNull(sessions.deletedAt)),
       orderBy: (sessions, { desc }) => [desc(sessions.checkedInAt)],
     });
     return c.json(inProgress);
@@ -119,7 +119,7 @@ export const queueRoutes = new Hono()
     const updated = await db
       .update(sessions)
       .set({ status: "in_progress" })
-      .where(eq(sessions.id, sessionId))
+      .where(and(eq(sessions.id, sessionId), isNull(sessions.deletedAt)))
       .returning({ id: sessions.id });
 
     if (!updated.length) {

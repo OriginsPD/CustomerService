@@ -27,6 +27,11 @@ export const sentimentEnum = pgEnum("sentiment_type", [
   "negative",
 ]);
 
+export const staffRoleEnum = pgEnum("staff_role", [
+  "admin",
+  "agent",
+]);
+
 export const questionTypeEnum = pgEnum("question_type", [
   "text",
   "boolean",
@@ -62,6 +67,7 @@ export const sessions = pgTable(
       .notNull()
       .defaultNow(),
     checkedOutAt: timestamp("checked_out_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => ({
     emailIdx: index("sessions_email_idx").on(t.email),
@@ -90,6 +96,7 @@ export const feedback = pgTable(
     submittedAt: timestamp("submitted_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => ({
     sessionIdIdx: index("feedback_session_id_idx").on(t.sessionId),
@@ -191,6 +198,20 @@ export const cancellationFeedback = pgTable(
   })
 );
 
+// ── Staff (Authentication) ───────────────────────────────────────────────────
+
+export const staffs = pgTable(
+  "staffs",
+  {
+    id: text("id").primaryKey(),
+    username: text("username").notNull().unique(),
+    passwordHash: text("password_hash").notNull(),
+    role: staffRoleEnum("role").notNull().default("agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  }
+);
+
 // ── Relations ─────────────────────────────────────────────────────────────────
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -251,3 +272,5 @@ export type AIDecisionLog = typeof aiDecisionLog.$inferSelect;
 export type NewAIDecisionLog = typeof aiDecisionLog.$inferInsert;
 export type CancellationFeedback = typeof cancellationFeedback.$inferSelect;
 export type NewCancellationFeedback = typeof cancellationFeedback.$inferInsert;
+export type Staff = typeof staffs.$inferSelect;
+export type NewStaff = typeof staffs.$inferInsert;
