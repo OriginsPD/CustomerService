@@ -33,7 +33,7 @@ export async function runAnalysis(): Promise<{
     // 1. Fetch recent feedback (indexed query by submittedAt)
     const recentFeedback = await db.query.feedback.findMany({
       where: gte(feedback.submittedAt, since),
-      with: { answers: { with: { question: true } } },
+      with: { answers: { with: { question: true, sessionQuestion: true } } },
     });
 
     // 2. Fetch current active questions
@@ -47,7 +47,10 @@ export async function runAnalysis(): Promise<{
       comment: f.comment,
       rating: f.rating,
       answers: Object.fromEntries(
-        f.answers.map((a) => [a.question.text, a.answer])
+        f.answers.map((a) => [
+          a.question?.text ?? a.sessionQuestion?.text ?? "Unknown",
+          a.answer,
+        ])
       ),
     }));
 

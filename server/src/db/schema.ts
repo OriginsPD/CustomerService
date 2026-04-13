@@ -110,6 +110,26 @@ export const feedback = pgTable(
   })
 );
 
+// ── Session Questions (AI-generated for specific sessions) ────────────────────
+
+export const sessionQuestions = pgTable(
+  "session_questions",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => sessions.id, { onDelete: "cascade" }),
+    text: text("text").notNull(),
+    type: questionTypeEnum("type").notNull().default("text"),
+    generatedAt: timestamp("generated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    sessionIdIdx: index("session_questions_session_id_idx").on(t.sessionId),
+  })
+);
+
 // ── Feedback Answers (Dynamic question responses) ─────────────────────────────
 
 export const feedbackAnswers = pgTable(
@@ -120,16 +140,16 @@ export const feedbackAnswers = pgTable(
       .notNull()
       .references(() => feedback.id, { onDelete: "cascade" }),
     questionId: text("question_id")
-      .notNull()
       .references(() => dynamicQuestions.id, { onDelete: "cascade" }),
+    sessionQuestionId: text("session_question_id")
+      .references(() => sessionQuestions.id, { onDelete: "cascade" }),
     answer: text("answer").notNull(),
   },
   (t) => ({
     feedbackIdx: index("answers_feedback_id_idx").on(t.feedbackId),
     questionIdx: index("answers_question_id_idx").on(t.questionId),
-    compositeIdx: uniqueIndex("answers_composite_idx").on(
-      t.feedbackId,
-      t.questionId
+    sessionQuestionIdx: index("answers_session_question_id_idx").on(
+      t.sessionQuestionId
     ),
   })
 );
@@ -234,7 +254,7 @@ export const systemSettings = pgTable(
 
 // ── Relations ─────────────────────────────────────────────────────────────────
 
-export const sessionsRelations = relations(sessions, ({ one }) => ({
+export const sessionsRelations = relations(sessions, ({ one, many }) => ({
   feedback: one(feedback, {
     fields: [sessions.id],
     references: [feedback.sessionId],
@@ -243,6 +263,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
     fields: [sessions.processedBy],
     references: [staffs.id],
   }),
+  sessionQuestions: many(sessionQuestions),
 }));
 
 export const feedbackRelations = relations(feedback, ({ one, many }) => ({
@@ -264,6 +285,21 @@ export const feedbackAnswersRelations = relations(
       fields: [feedbackAnswers.questionId],
       references: [dynamicQuestions.id],
     }),
+    sessionQuestion: one(sessionQuestions, {
+      fields: [feedbackAnswers.sessionQuestionId],
+      references: [sessionQuestions.id],
+    }),
+  })
+);
+
+export const sessionQuestionsRelations = relations(
+  sessionQuestions,
+  ({ one, many }) => ({
+    session: one(sessions, {
+      fields: [sessionQuestions.sessionId],
+      references: [sessions.id],
+    }),
+    answers: many(feedbackAnswers),
   })
 );
 
@@ -302,6 +338,8 @@ export type Feedback = typeof feedback.$inferSelect;
 export type NewFeedback = typeof feedback.$inferInsert;
 export type FeedbackAnswer = typeof feedbackAnswers.$inferSelect;
 export type NewFeedbackAnswer = typeof feedbackAnswers.$inferInsert;
+export type SessionQuestion = typeof sessionQuestions.$inferSelect;
+export type NewSessionQuestion = typeof sessionQuestions.$inferInsert;
 export type DynamicQuestion = typeof dynamicQuestions.$inferSelect;
 export type NewDynamicQuestion = typeof dynamicQuestions.$inferInsert;
 export type AIDecisionLog = typeof aiDecisionLog.$inferSelect;

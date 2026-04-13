@@ -78,7 +78,61 @@ const InsightsResponseSchema = z.array(
   })
 );
 
-// ── Helper ────────────────────────────────────────────────────────────────────
+const SessionSpecificInquirySchema = z.array(
+  z.object({
+    text: z.string().min(10).max(200),
+    type: z.enum(["text", "boolean", "scale"]),
+  })
+);
+
+// ... existing helper safeParseJSON ...
+
+// ── Public AI functions ───────────────────────────────────────────────────────
+
+/**
+ * Generates 2-3 highly contextual questions for a specific client session.
+ * Triggered when a session is marked as "completed" or "processing".
+ */
+export async function generateSessionSpecificInquiry(sessionData: {
+  name: string;
+  purpose: string;
+  staffName?: string;
+  durationMinutes: number;
+}): Promise<Array<{ text: string; type: "text" | "boolean" | "scale" }>> {
+  const prompt = `You are a customer experience specialist. Generate 2-3 unique, highly contextual feedback questions for a specific customer visit.
+
+Session Metadata:
+- Customer Name: ${sessionData.name}
+- Purpose of Visit: ${sessionData.purpose}
+- Staff Member Interaction: ${sessionData.staffName || "General Staff"}
+- Duration of Service: ${sessionData.durationMinutes} minutes
+
+Rules:
+- Questions must feel personal and related to their specific purpose (${sessionData.purpose}).
+- Do NOT use generic "How was your service" questions.
+- Vary the types: use a mix of "text", "boolean", and "scale".
+- Return ONLY valid JSON array (no markdown).
+
+Return Format:
+[{ "text": string, "type": "text" | "boolean" | "scale" }]`;
+
+  const raw = await callAI(prompt, 500);
+
+  if (raw) {
+    try {
+      const parsed = safeParseJSON(raw);
+      return SessionSpecificInquirySchema.parse(parsed);
+    } catch (err) {
+      logger.error("[AI] Session inquiry parsing failed", { error: (err as Error).message, raw });
+    }
+  }
+
+  // Fallback heuristic if AI fails
+  return [
+    { text: `How satisfied were you with the assistance regarding ${sessionData.purpose}?`, type: "scale" },
+    { text: `Was ${sessionData.staffName || "the staff member"} able to fully resolve your request today?`, type: "boolean" }
+  ];
+}
 
 function safeParseJSON(raw: string): unknown {
   try {

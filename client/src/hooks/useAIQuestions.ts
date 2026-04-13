@@ -14,3 +14,12 @@ export const activeQuestionsQueryOptions = () =>
 export function useAIQuestions() {
   return useQuery(activeQuestionsQueryOptions());
 }
+
+export function useSessionQuestions(sessionId: string) {
+  return useQuery({
+    queryKey: ["questions", "session", sessionId],
+    queryFn: () => api.questions.session(sessionId) as Promise<Array<DynamicQuestion & { isSessionSpecific: boolean }>>,
+    staleTime: 0, // Always fetch fresh as they are generated on completion
+    enabled: !!sessionId,
+  });
+}

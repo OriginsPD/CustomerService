@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "../db/connection.js";
-import { dynamicQuestions } from "../db/schema.js";
-import { eq, asc } from "drizzle-orm";
+import { dynamicQuestions, sessionQuestions } from "../db/schema.js";
+import { eq, asc, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { staffAuth } from "../middleware/staffAuth.js";
 
@@ -25,6 +25,44 @@ export const questionRoutes = new Hono()
         addedAt: q.addedAt.toISOString(),
       }))
     );
+  })
+
+  // GET /api/questions/session/:sessionId — Fetch all questions for a specific checkout
+  .get("/session/:sessionId", async (c) => {
+    const sessionId = c.req.param("sessionId");
+
+    // 1. Fetch Global Questions
+    const globalQuestions = await db
+      .select()
+      .from(dynamicQuestions)
+      .where(eq(dynamicQuestions.isActive, true))
+      .orderBy(asc(dynamicQuestions.displayOrder));
+
+    // 2. Fetch Session-Specific Questions (AI generated)
+    const specificQuestions = await db
+      .select()
+      .from(sessionQuestions)
+      .where(eq(sessionQuestions.sessionId, sessionId))
+      .orderBy(asc(sessionQuestions.generatedAt));
+
+    const allQuestions = [
+      ...globalQuestions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        type: q.type,
+        source: q.source,
+        isSessionSpecific: false,
+      })),
+      ...specificQuestions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        type: q.type,
+        source: "ai_generated",
+        isSessionSpecific: true,
+      })),
+    ];
+
+    return c.json(allQuestions);
   })
 
   // POST /api/questions — Manually add a question (staff JWT required)

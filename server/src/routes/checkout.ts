@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { nanoid } from "nanoid";
 import { db } from "../db/connection.js";
-import { feedback, feedbackAnswers, sessions } from "../db/schema.js";
-import { eq, and, isNull } from "drizzle-orm";
+import { feedback, feedbackAnswers, sessions, dynamicQuestions, sessionQuestions } from "../db/schema.js";
+import { eq, and, isNull, inArray } from "drizzle-orm";
 import { CheckOutFormSchema } from "@vcc/shared";
 import { analyzeSentiment } from "../services/ai.service.js";
 import { deregisterSession } from "../services/queue.service.js";
@@ -68,13 +68,23 @@ export const checkoutRoutes = new Hono()
         });
 
         if (body.dynamicAnswers && body.dynamicAnswers.length > 0) {
+          // Identify which IDs belong to global questions vs session questions
+          const answerIds = body.dynamicAnswers.map(a => a.questionId);
+          
+          const globals = await tx.select({ id: dynamicQuestions.id }).from(dynamicQuestions).where(inArray(dynamicQuestions.id, answerIds));
+          const globalIdSet = new Set(globals.map(g => g.id));
+
           await tx.insert(feedbackAnswers).values(
-            body.dynamicAnswers.map((a) => ({
-              id: nanoid(),
-              feedbackId,
-              questionId: a.questionId,
-              answer: a.answer,
-            }))
+            body.dynamicAnswers.map((a) => {
+              const isGlobal = globalIdSet.has(a.questionId);
+              return {
+                id: nanoid(),
+                feedbackId,
+                questionId: isGlobal ? a.questionId : null,
+                sessionQuestionId: isGlobal ? null : a.questionId,
+                answer: a.answer,
+              };
+            })
           );
         }
 

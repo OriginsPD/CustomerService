@@ -10,25 +10,9 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn, getSentimentColor } from "@/lib/utils";
+import { auth, MY_SESSION_KEY, DAY_SESSION_KEY } from "@/lib/auth";
 
-interface FeedbackSuccessDrawerProps {
-  result: FeedbackResponse;
-  open: boolean;
-  onClose: () => void;
-}
-
-const sentimentIcons = {
-  positive: ThumbsUp,
-  neutral: CheckCircle2,
-  negative: AlertCircle,
-};
-
-const sentimentVariants = {
-  positive: "positive",
-  neutral: "neutral",
-  negative: "negative",
-} as const;
+// ... existing imports ...
 
 export function FeedbackSuccessDrawer({
   result,
@@ -39,6 +23,10 @@ export function FeedbackSuccessDrawer({
   const SentimentIcon = sentimentIcons[result.sentiment];
 
   const handleNewCheckin = () => {
+    // End the current client session
+    localStorage.removeItem(MY_SESSION_KEY);
+    localStorage.removeItem(DAY_SESSION_KEY);
+    
     onClose();
     navigate({ to: "/check-in" });
   };

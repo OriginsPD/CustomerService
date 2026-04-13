@@ -113,7 +113,8 @@ export const api = {
 
   // Questions
   questions: {
-    active: () => request("/questions/active"),
+    active: () => request<any[]>("/questions/active"),
+    session: (sessionId: string) => request<any[]>(`/questions/session/${sessionId}`),
     add: (body: { text: string; type?: string }) =>
       staffRequest("/questions", { method: "POST", body: JSON.stringify(body) }),
     deactivate: (id: string) =>

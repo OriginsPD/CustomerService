@@ -14,7 +14,10 @@ export const feedbackRoutes = new Hono()
 
     const [rows, total] = await Promise.all([
       db.query.feedback.findMany({
-        with: { session: true, answers: { with: { question: true } } },
+        with: {
+          session: true,
+          answers: { with: { question: true, sessionQuestion: true } },
+        },
         orderBy: [desc(feedback.submittedAt)],
         limit: pageSize,
         offset,
@@ -33,7 +36,7 @@ export const feedbackRoutes = new Hono()
         sentimentScore: f.sentimentScore,
         submittedAt: f.submittedAt.toISOString(),
         answers: f.answers.map((a) => ({
-          question: a.question.text,
+          question: a.question?.text ?? a.sessionQuestion?.text ?? "Unknown Question",
           answer: a.answer,
         })),
       })),
@@ -94,7 +97,10 @@ export const feedbackRoutes = new Hono()
 
     const result = await db.query.feedback.findFirst({
       where: eq(feedback.id, id),
-      with: { session: true, answers: { with: { question: true } } },
+      with: {
+        session: true,
+        answers: { with: { question: true, sessionQuestion: true } },
+      },
     });
 
     if (!result) return c.json({ error: "Not found" }, 404);

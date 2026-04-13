@@ -1,11 +1,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Send, MessageSquareHeart } from "lucide-react";
+import { Loader2, Send, MessageSquareHeart, Sparkles, Brain } from "lucide-react";
 import { CheckOutFormSchema, type CheckOutForm, type FeedbackResponse } from "@vcc/shared";
 import { useCheckOut } from "@/hooks/useCheckOut";
-import { useAIQuestions } from "@/hooks/useAIQuestions";
+import { useSessionQuestions } from "@/hooks/useAIQuestions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { GlossCard } from "@/components/shared/GlossCard";
@@ -22,13 +22,14 @@ interface CheckOutFormProps {
 export function CheckOutFormComponent({ sessionId }: CheckOutFormProps) {
   const [result, setResult] = useState<FeedbackResponse | null>(null);
   const checkOut = useCheckOut();
-  const { data: questions = [], isLoading: questionsLoading } = useAIQuestions();
+  const { data: questions = [], isLoading: questionsLoading } = useSessionQuestions(sessionId);
 
   const {
     register,
     handleSubmit,
     control,
     watch,
+    reset,
     formState: { errors },
   } = useForm<CheckOutForm>({
     resolver: zodResolver(CheckOutFormSchema),
@@ -40,19 +41,26 @@ export function CheckOutFormComponent({ sessionId }: CheckOutFormProps) {
     },
   });
 
+  // Sync questions to form default values once loaded
+  useEffect(() => {
+    if (questions.length > 0) {
+      reset({
+        sessionId,
+        rating: 0 as any,
+        comment: "",
+        dynamicAnswers: questions.map((q) => ({
+          questionId: q.id,
+          answer: q.type === "scale" ? "5" : q.type === "boolean" ? "false" : "",
+        })),
+      });
+    }
+  }, [questions, reset, sessionId]);
+
   const commentValue = watch("comment");
 
   const onSubmit = async (data: CheckOutForm) => {
     try {
-      // Attach question IDs to dynamic answers if they weren't already set
-      const enriched: CheckOutForm = {
-        ...data,
-        dynamicAnswers: questions.map((q, i) => ({
-          questionId: q.id,
-          answer: data.dynamicAnswers?.[i]?.answer ?? (q.type === "boolean" ? "false" : "5"),
-        })),
-      };
-      const res = await checkOut.mutateAsync(enriched);
+      const res = await checkOut.mutateAsync(data);
       setResult(res);
     } catch (err) {
       console.error("Submission failed:", err);
@@ -85,19 +93,6 @@ export function CheckOutFormComponent({ sessionId }: CheckOutFormProps) {
             <div className="h-px bg-gradient-to-r from-amber-500/30 via-stone-800 to-transparent" />
           </div>
 
-          <AnimatePresence>
-            {checkOut.isError && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-400 font-semibold"
-              >
-                {checkOut.error?.message ?? "Encryption sync failure. Please retry."}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-10" noValidate>
             {/* Star rating */}
             <div className="space-y-3">
@@ -123,20 +118,35 @@ export function CheckOutFormComponent({ sessionId }: CheckOutFormProps) {
               />
             </div>
 
-            {/* Dynamic AI questions */}
-            {(questions.length > 0 || questionsLoading) && (
-              <div className="border-t border-white/5 pt-10 space-y-6">
-                <div className="flex items-center gap-2 mb-4">
+            {/* Dynamic AI questions pool */}
+            <div className="border-t border-white/5 pt-10 space-y-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Contextual Inquiry</span>
                 </div>
+                
+                {questionsLoading && (
+                  <div className="flex items-center gap-2 text-[10px] text-amber-500/60 font-bold uppercase animate-pulse">
+                    <Brain className="h-3 w-3" /> AI Personalizing...
+                  </div>
+                )}
+              </div>
+
+              {questionsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-24 w-full rounded-2xl bg-white/5 shimmer" />
+                  ))}
+                </div>
+              ) : (
                 <DynamicQuestions
                   questions={questions}
                   control={control}
                   isLoading={questionsLoading}
                 />
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Submit */}
             <div className="pt-4">
@@ -144,7 +154,7 @@ export function CheckOutFormComponent({ sessionId }: CheckOutFormProps) {
                 type="submit"
                 size="lg"
                 className="w-full btn-gradient h-14 text-base shadow-2xl shadow-amber-500/30 group"
-                disabled={checkOut.isPending}
+                disabled={checkOut.isPending || questionsLoading}
               >
                 {checkOut.isPending ? (
                   <Loader2 className="h-5 w-5 animate-spin" />

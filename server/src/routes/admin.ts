@@ -4,12 +4,13 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { db } from "../db/connection.js";
-import { staffs, systemSettings, sessions } from "../db/schema.js";
+import { staffs, systemSettings, sessions, sessionQuestions } from "../db/schema.js";
 import { staffAuth, roleAuth, type StaffPayload } from "../middleware/staffAuth.js";
 import { hashPassword } from "./auth.js";
 import { logger } from "../lib/logger.js";
 import { runAnalysis } from "../services/scheduler.service.js";
 import { initQueueMap } from "../services/queue.service.js";
+import { generateSessionSpecificInquiry } from "../services/ai.service.js";
 
 export const adminRoutes = new Hono<{
   Variables: {
@@ -40,7 +41,7 @@ adminRoutes.patch("/sessions/:sessionId/complete", async (c) => {
   const sessionId = c.req.param("sessionId");
   const staff = c.get("staff");
   
-  const updated = await db
+  const [session] = await db
     .update(sessions)
     .set({ 
       status: "completed", 
@@ -48,11 +49,44 @@ adminRoutes.patch("/sessions/:sessionId/complete", async (c) => {
       processedBy: staff.sub
     })
     .where(eq(sessions.id, sessionId))
-    .returning({ id: sessions.id });
+    .returning();
 
-  if (!updated.length) {
+  if (!session) {
     return c.json({ error: "Session not found" }, 404);
   }
+
+  // ── Background Hook: Trigger AI Question Generation ─────────────────────────
+  // We run this without awaiting to keep the API responsive
+  (async () => {
+    try {
+      const durationMs = session.checkedOutAt!.getTime() - session.checkedInAt.getTime();
+      const durationMinutes = Math.round(durationMs / 60000);
+
+      const aiQuestions = await generateSessionSpecificInquiry({
+        name: session.name,
+        purpose: session.purpose,
+        staffName: staff.fullName,
+        durationMinutes,
+      });
+
+      if (aiQuestions.length > 0) {
+        await db.insert(sessionQuestions).values(
+          aiQuestions.map((q) => ({
+            id: nanoid(),
+            sessionId: session.id,
+            text: q.text,
+            type: q.type,
+          }))
+        );
+        logger.info(`[AI] Generated ${aiQuestions.length} unique questions for session ${session.id}`);
+      }
+    } catch (err) {
+      logger.error(`[AI] Failed to generate session inquiries for ${session.id}`, { 
+        error: (err as Error).message 
+      });
+    }
+  })();
+
   return c.json({ success: true });
 });
 

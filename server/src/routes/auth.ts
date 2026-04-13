@@ -94,7 +94,11 @@ export const authRoutes = new Hono().post(
         expiresIn: TOKEN_TTL_SECONDS 
       });
     } catch (e) {
-      console.error("Auth route error:", e);
+      logger.error("[Auth] Login route exception", { 
+        error: (e as Error).message, 
+        stack: (e as Error).stack,
+        hasSecret: !!JWT_SECRET
+      });
       return c.json({ error: "Server error" }, 500);
     }
   }
